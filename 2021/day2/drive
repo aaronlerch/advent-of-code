@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+
+x,y = 0,0
+
+# forward = x+
+# down = y+
+# up = y-
+
+File.foreach("input.txt") do |line|
+    m = line.match /(\w+)\s*(\d+)/i
+    next unless m
+    direction = m[1]
+    units = m[2].to_i
+    if direction =~ /forward/
+        x += units
+    elsif direction =~ /down/
+        y += units
+    elsif direction =~ /up/
+        y -= units
+    end
+end
+
+puts "x: #{x}, y: #{y}, mult: #{x*y}"
