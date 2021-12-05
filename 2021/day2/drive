@@ -1,22 +1,24 @@
 #!/usr/bin/env ruby
 
+aim = 0
 x,y = 0,0
 
-# forward = x+
-# down = y+
-# up = y-
+# forward = x+ && y + aim*unit
+# down = aim+
+# up = aim-
 
 File.foreach("input.txt") do |line|
     m = line.match /(\w+)\s*(\d+)/i
     next unless m
     direction = m[1]
-    units = m[2].to_i
+    dist = m[2].to_i
     if direction =~ /forward/
-        x += units
+        x += dist
+        y += (aim * dist)
     elsif direction =~ /down/
-        y += units
+        aim += dist
     elsif direction =~ /up/
-        y -= units
+        aim -= dist
     end
 end
 
