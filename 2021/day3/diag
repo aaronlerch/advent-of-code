@@ -2,17 +2,21 @@
 
 gamma = ""
 chars = []
+all_binary = []
 
 File.foreach("input.txt").with_index do |line,idx|
-    digits = line.chomp.split('')
+    digit = line.chomp
+    all_binary << digit.to_i(2)
+    digits = digit.split('')
     digits.each_with_index do |char,i|
-        digit = char.to_i
+        digit = char.to_i # 0 or 1
         chars[i] = [] if chars[i] == nil
         chars[i][digit] = 0 if chars[i][digit] == nil
         chars[i][digit] += 1
     end
 end
 
+# compute gamma
 chars.each do |char|
     digit = char[1] > char[0] ? "1" : "0"
     gamma << digit
@@ -27,11 +31,88 @@ gamma.split('').each do |ch|
     end
 end
 
-puts gamma
-puts epsilon
+#puts gamma
+#puts epsilon
 
 g = gamma.to_i(2)
 e = epsilon.to_i(2)
 
 power = g * e
 puts "Power consumption: #{power}"
+
+puts "Computing o2 gen and co2 scrub"
+
+BITS=12
+
+def get_bit(num,bit_pos)
+    bitmask = 1 << bit_pos
+    result = num & bitmask
+    bit = result >> bit_pos
+    return bit
+end
+
+def most_common(bit, most_common_value)
+    if most_common_value
+        bit == most_common_value
+    else
+        bit == 1
+    end
+end
+
+def least_common(bit, most_common_value)
+    if most_common_value
+        bit != most_common_value
+    else
+        bit == 0
+    end
+end
+
+def compute_rating(inputs, bit_criteria)
+    bit_pos = BITS-1 # start with MSB (BITS-1 for 0-based indexing)
+
+    # Loop through all the bit positions, short-circuiting (below) if the inputs length is 1 (we found a result)
+    while bit_pos >= 0
+        counts = [0,0]
+
+        # for each value in inputs, count the ones/zeros at the current bit position
+        inputs.each do |input|
+            bit = get_bit(input, bit_pos)
+            counts[bit] += 1
+        end
+
+        # if 0 and 1 are the same, there is no most common value
+        most_common_value = nil
+        if counts[0] > counts[1]
+            most_common_value = 0
+        elsif counts[0] < counts[1]
+            most_common_value = 1
+        end
+
+        # now we have the stats in counts and can filter on the "bit criteria"
+
+        inputs = inputs.select do |input|
+            bit = get_bit(input, bit_pos)
+            bit_criteria.call(bit, most_common_value)
+        end
+
+        break if inputs.length <= 1
+
+        # Move one bit over and continue
+        bit_pos -= 1
+    end
+
+    return inputs
+end
+
+o2 = all_binary.dup
+o2_results = compute_rating(o2, method(:most_common))
+
+co2 = all_binary.dup
+co2_results = compute_rating(co2, method(:least_common))
+
+puts "o2 results length: #{o2_results.length}"
+puts "co2 results length: #{co2_results.length}"
+
+life_support_rating = o2_results.first * co2_results.first
+
+puts "Life support rating: #{life_support_rating}"
