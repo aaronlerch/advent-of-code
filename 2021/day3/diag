@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+
+gamma = ""
+chars = []
+
+File.foreach("input.txt").with_index do |line,idx|
+    digits = line.chomp.split('')
+    digits.each_with_index do |char,i|
+        digit = char.to_i
+        chars[i] = [] if chars[i] == nil
+        chars[i][digit] = 0 if chars[i][digit] == nil
+        chars[i][digit] += 1
+    end
+end
+
+chars.each do |char|
+    digit = char[1] > char[0] ? "1" : "0"
+    gamma << digit
+end
+
+epsilon = ""
+gamma.split('').each do |ch|
+    if ch == '0'
+        epsilon << '1'
+    else
+        epsilon << '0'
+    end
+end
+
+puts gamma
+puts epsilon
+
+g = gamma.to_i(2)
+e = epsilon.to_i(2)
+
+power = g * e
+puts "Power consumption: #{power}"
