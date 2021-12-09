@@ -1,0 +1,56 @@
+#!/usr/bin/env ruby
+
+require_relative 'bingo_stuff'
+
+input = File.readlines("input.txt")
+
+numbers = input.shift.split(',').map(&:to_i)
+input.shift # empty line separator
+
+boards = []
+winning_boards = []
+
+# read 5 lines and create a board with them -- ignore empty lines
+
+board_count = 1
+while input.length > 0
+    b = input.shift(5)
+    separator = input.shift
+
+    # convert strings to numbers
+    grid = b.map { |row| row.split.map { |cell| cell.to_i } }
+    boards << Board.new(grid, board_count)
+    board_count += 1
+end
+
+# call numbers, mark boards, find winners!
+
+numbers.each do |number|
+    boards.delete_if do |board|
+        board.mark_number(number)
+        winner = board.winner?
+        winning_boards << board if winner
+        winner
+    end
+end
+
+results = [
+    {
+        label: "first",
+        board: winning_boards.first
+    },
+    {
+        label: "last",
+        board: winning_boards.last
+    }
+]
+
+results.each do |result|
+    board, label = result[:board], result[:label]
+    puts "Found #{label} winning board"
+    puts "========================"
+    puts board
+    puts "========================"
+    puts ""
+    puts ""
+end
