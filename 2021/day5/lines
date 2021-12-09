@@ -1,16 +1,6 @@
 #!/usr/bin/env ruby
 
-class Segment
-    attr_reader :x1, :y1, :x2, :y2
-
-    def initialize(x1,y1,x2,y2)
-        @x1, @y1, @x2, @y2 = x1, y1, x2, y2
-    end
-
-    def to_s
-        "#{@x1},#{@y1} -> #{@x2},#{@y2}"
-    end
-end
+require_relative './utils'
 
 input = File.readlines("input.txt")
 
@@ -31,58 +21,9 @@ puts "#{horiz_and_vert_only.length} are horizontal or vertical only"
 # Create a sparse matrix for tracking intersections
 sparse = {}
 
-def log(matrix, x, y)
-    point = [x,y]
-    value = matrix[point]
-    value = 0 unless value
-    value += 1
-    matrix[point] = value
-end
-
-horiz_and_vert_only.each_with_index do |seg, idx|
-    # expand the line segment into data points, incrementing each time one is encountered
-
-    if seg.x1 == seg.x2
-        # horizontal
-        if seg.y1 <= seg.y2
-            # iterate from y1 to y2
-            y = seg.y1
-            while y <= seg.y2
-                log(sparse, seg.x1, y)
-                y += 1
-            end
-        else
-            # iterate from y2 to y1
-            y = seg.y1
-            while y >= seg.y2
-                log(sparse, seg.x1, y)
-                y -= 1
-            end
-        end
-    else
-        # vertical
-        if seg.x1 <= seg.x2
-            # iterate from x1 to x2
-            x = seg.x1
-            while x <= seg.x2
-                log(sparse, x, seg.y1)
-                x += 1
-            end
-        else
-            # iterate from x2 to x1
-            x = seg.x1
-            while x >= seg.x2
-                log(sparse, x, seg.y1)
-                x -= 1
-            end
-        end
-    end
-end
-
-def print_intersection_count(matrix)
-    # find intersecting points
-    intersections = matrix.select { |k,v| v > 1 }
-    puts "Found #{intersections.length} intersecting points"
+horiz_and_vert_only.each do |seg|
+    # expand the line segment into individual data points
+    seg.to_points.each { |pt| log(sparse, pt) }
 end
 
 print_intersection_count sparse
@@ -92,21 +33,8 @@ diag = segments.select { |s| s.x1 != s.x2 && s.y1 != s.y2 }
 # find intersecting points for the remaining diagonal lines
 puts "#{diag.length} are diagonal"
 
-diag.each_with_index do |seg, idx|
-    # increment both x1 -> x2 and y1 -> y2 at the same time
-    while x1 <= x2 && y1 <= y2
-        log(sparse, x1, y1)
-        x1 += 1
-        y1 += 1
-    end
+diag.each do |seg|
+    seg.to_points.each { |pt| log(sparse, pt) }
 end
 
 print_intersection_count sparse
-
-
-## TODO: need to walk the line segment using smaller to greater numbers
-# for both x and y
-# but need to correctly translate the line segment from current form
-# which could have a vector going negative
-# into the same vector -- I've been accidentally flipping them when one axis
-# was in a positive direction and one was in a negative direction
