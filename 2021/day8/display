@@ -2,17 +2,94 @@
 
 input = File.readlines("input.txt")
 
-# part 1 - count the number of outputs that have length 2, 3, 4, 7
-count = 0
+# part 2, use an algorithm with the signals to determine the output,
+# summing all outputs.
+# AFTER IMPLEMENTING IT: I guess you could technically call it an "algorithm" -- wow, not proud of this
+sum = 0
+
+key = {
+    "abcefg" => 0,
+    "cf" => 1,
+    "acdeg" => 2,
+    "acdfg" => 3,
+    "bcdf" => 4,
+    "abdfg" => 5,
+    "abdefg" => 6,
+    "acf" => 7,
+    "abcdefg" => 8,
+    "abcdfg" => 9
+}
 
 input.each do |line|
-    signals, output = line.split('|')
+    signals, codes = line.split('|')
 
-    inputs = signals.split
-    outputs = output.split
+    inputs = signals.split.map { |i| i.chars.sort.join }
+    outputs = codes.split.map { |i| i.chars.sort.join }
+
+    # algo -- find A, B, D, G, F, C, E
+    # find digit 1 == segments c and f (CF)
+    # find digit 7 -- letters in 7 - 1 == SEGMENT A
+    # find digit 4 -- letters in 4 - 1 == segments b and d (BD)
+    # find digit 8 -- letters in 8 - 4 - segment a == segments e and g (EG)
+    # find digit with 6 segments containing c, f, e, and g, substract them plus a == SEGMENT B
+    # find digit 4 -- - segment b, c and f == SEGMENT D
+    # find digit with 6 segments containing a, b, d, c and f and subtract them == SEGMENT G
+    # find digit with 6 segments containing b, d, e, g, a, subtract them == SEGMENT F
+    # find digit 1 -- subtract f == SEGMENT C
+    # find digit 8 -- subtract a, b, d, g, f, c == SEGMENT E
+    # have all segments
+
+    six_segments = inputs.select { |i| i.length == 6 }
+
+    one = inputs.find { |i| i.length == 2 }.chars.sort.join
+    four = inputs.find { |i| i.length == 4 }.chars.sort.join
+    seven = inputs.find { |i| i.length == 3 }.chars.sort.join
+    eight = inputs.find { |i| i.length == 7 }.chars.sort.join
+
+    cf = one
+    a = (seven.chars - one.chars).join
+    bd = (four.chars - one.chars).join
+    eg = (eight.chars - four.chars - a.chars).join
+
+    search = (cf + eg).chars.sort.join
+    result = six_segments.find { |i| (search.chars - i.chars).empty? }
+    b = (result.chars - cf.chars - eg.chars - a.chars).join
+
+    d = (four.chars - b.chars - cf.chars).join
+
+    search = (a + bd + cf).chars.sort.join
+    result = six_segments.find { |i| (search.chars - i.chars).empty? }
+    g = (result.chars - a.chars - bd.chars - cf.chars).join
+
+    search = (bd + eg + a).chars.sort.join
+    result = six_segments.find { |i| (search.chars - i.chars).empty? }
+    f = (result.chars - bd.chars - eg.chars - a.chars).join
+    
+    c = (one.chars - f.chars).join
+    e = (eight.chars - a.chars - bd.chars - g.chars - f.chars - c.chars).join
+
+    # now we need to create a map now that we know all the segments
+    map = {
+        (a + b + c + e + f + g).chars.sort.join => "abcefg",
+        (c + f).chars.sort.join => "cf",
+        (a + c + d + e + g).chars.sort.join => "acdeg",
+        (a + c + d + f + g).chars.sort.join => "acdfg",
+        (b + c + d + f).chars.sort.join => "bcdf",
+        (a + b + d + f + g).chars.sort.join => "abdfg",
+        (a + b + d + e + f + g).chars.sort.join => "abdefg",
+        (a + c + f).chars.sort.join => "acf",
+        (a + b + c + d + e + f + g).chars.sort.join => "abcdefg",
+        (a + b + c + d + f + g).chars.sort.join => "abcdfg"
+    }
+
+    # use the map for each output to get to a digit of a number
+    result = ""
     outputs.each do |o|
-        count += 1 if o.length == 2 || o.length == 3 || o.length == 4 || o.length == 7
+        result << key[map[o]].to_s
     end
+
+    puts "Output: #{result}"
+    sum += result.to_i
 end
 
-puts count
+puts "SUM: #{sum}"
