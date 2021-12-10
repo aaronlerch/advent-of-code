@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+
+input = File.readlines("input.txt")
+
+crabs = input.first.split(',').map(&:to_i)
+
+max = crabs.max
+min = crabs.min
+
+# need to find the optimal position between min and max
+
+# As always, start with brute force! For each possible position,
+# calculate the fuel required to move each crab to that position
+
+results = {} # pos => total fuel
+
+(min..max).each do |pos|
+    fuel = 0
+
+    crabs.each do |crab|
+        dist = (crab - pos).abs
+        # part 1
+        # fuel += dist
+        # part 2
+        fuel += dist*(dist+1)/2
+    end
+
+    results[pos] = fuel
+end
+
+puts results.min_by { |k,v| v }
