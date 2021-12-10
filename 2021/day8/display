@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+input = File.readlines("input.txt")
+
+# part 1 - count the number of outputs that have length 2, 3, 4, 7
+count = 0
+
+input.each do |line|
+    signals, output = line.split('|')
+
+    inputs = signals.split
+    outputs = output.split
+    outputs.each do |o|
+        count += 1 if o.length == 2 || o.length == 3 || o.length == 4 || o.length == 7
+    end
+end
+
+puts count
