@@ -1,38 +1,42 @@
 #!/usr/bin/env ruby
 
-class Fish
-    attr_reader :timer
-
-    def initialize(timer=8)
-        @timer = timer
-    end
-
-    def try_spawn
-        @timer -= 1
-
-        if @timer == -1
-            @timer = 6
-            return Fish.new
-        end
-    end
-end
+DAYS = 256
+LIFECYCLE = 6
+SPAWN = 8
 
 input = File.readlines("input.txt")
 initial_state = input.first.split(',').map(&:to_i)
 
-all_fish = initial_state.map { |i| Fish.new(i) }
+# data store for stages: stage => count of fish in that stage
+stages = {}
 
-puts "Starting with #{all_fish.length} fish"
+(0..SPAWN).to_a.reverse.each { |i| stages[i] = 0 }
 
-DAYS = 80
+# initialize the stages
+initial_state.each { |i| stages[i] += 1 }
+
+puts "Starting with #{stages.values.sum} fish"
+# puts stages
 
 (1..DAYS).each do |day|
-    today_fish = all_fish.dup
+    # algo:
+    # dupe the stages hash
+    # move all values down a stage
+    # stage 0: add to 6 (lifecycle), add to 8 (spawn)
+    # reset the new stages
+    new_stages = {}
+    (0..SPAWN).to_a.reverse.each { |i| new_stages[i] = 0 }
 
-    today_fish.each do |f|
-        child = f.try_spawn
-        all_fish << child if child
+    stages.keys.sort.reverse.each do |k|
+        if k == 0
+            new_stages[LIFECYCLE] += stages[k]
+            new_stages[SPAWN] = stages[k]
+        else
+            new_stages[k-1] += stages[k]
+        end
     end
+    stages = new_stages
 
-    puts "Day #{day}: #{all_fish.length} fish"
+    puts "Day #{day}: #{stages.values.sum} fish"
+    # puts stages
 end
