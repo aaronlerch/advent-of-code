@@ -1,0 +1,30 @@
+#!/usr/bin/env ruby
+
+input = File.readlines("input.txt")
+
+map = []
+low_points = []
+
+input.each { |line| map << line.chomp.chars.map(&:to_i) }
+
+# now we have a map (input is 100x100)
+
+# for each location, evaluate if it's a low point, and if so add to low_points
+map.each_with_index do |row, x|
+    map[x].each_with_index do |value, y|
+        # compare value to surrounding values: x-1, x+1, y-1, y+1
+        low = true
+        low = false if x > 0 && map[x-1] && map[x-1][y] && map[x-1][y] <= value
+        low = false if map[x+1] && map[x+1][y] && map[x+1][y] <= value
+        low = false if y > 0 && map[x] && map[x][y-1] && map[x][y-1] <= value
+        low = false if map[x] && map[x][y+1] && map[x][y+1] <= value
+
+        # low_points << [x,y] if low
+        if low
+            low_points << value + 1 
+            # puts "Low point: [#{x},#{y}]"
+        end
+    end
+end
+
+puts "Found #{low_points.length} low points, total risk level: #{low_points.sum}"
