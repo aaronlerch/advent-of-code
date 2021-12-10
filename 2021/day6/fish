@@ -1,0 +1,38 @@
+#!/usr/bin/env ruby
+
+class Fish
+    attr_reader :timer
+
+    def initialize(timer=8)
+        @timer = timer
+    end
+
+    def try_spawn
+        @timer -= 1
+
+        if @timer == -1
+            @timer = 6
+            return Fish.new
+        end
+    end
+end
+
+input = File.readlines("input.txt")
+initial_state = input.first.split(',').map(&:to_i)
+
+all_fish = initial_state.map { |i| Fish.new(i) }
+
+puts "Starting with #{all_fish.length} fish"
+
+DAYS = 80
+
+(1..DAYS).each do |day|
+    today_fish = all_fish.dup
+
+    today_fish.each do |f|
+        child = f.try_spawn
+        all_fish << child if child
+    end
+
+    puts "Day #{day}: #{all_fish.length} fish"
+end
