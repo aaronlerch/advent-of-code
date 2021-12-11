@@ -1,0 +1,127 @@
+#!/usr/bin/env ruby
+
+FLASH_THRESHOLD=10
+
+@map = []
+
+input = File.readlines("example.txt").map(&:chomp)
+input.each { |line| @map << line.chars.map(&:to_i) }
+
+@flash_count = 0
+
+def do_for_all(map)
+    (0...map.length).each do |x|
+        (0...map[x].length).each do |y|
+            yield(map, x, y)
+        end
+    end
+end
+
+def increment_all
+    puts "START INC ALL"
+    do_for_all(@map) do |m,x,y|
+        increment(m,x,y)
+    end
+    puts "END INC ALL"
+end
+
+def reset_energies
+    do_for_all(@map) do |m,x,y|
+        value = m[x][y]
+        m[x][y] = 0 if value >= FLASH_THRESHOLD
+    end
+end
+
+def increment(map,x,y)
+    value = map[x][y]
+    value += 1
+    map[x][y] = value
+
+    # if we specifically crossed into FLASH_THRESHOLD, record it
+    if value == FLASH_THRESHOLD
+        @flash_count += 1
+        puts "[#{x},#{y}] FLASH"
+    end
+end
+
+def eval_flash(map, x, y)
+    value = map[x][y]
+    
+    # ignore if we aren't flashing
+    return if value != FLASH_THRESHOLD
+
+    # we specifically flashed before this eval
+    # trigger adjacent locations
+    # up left, up, up right
+    if x > 0 && y > 0
+        increment(map, x-1, y-1)
+        eval_flash(map, x-1, y-1)
+    end
+    if x > 0
+        increment(map, x-1, y)
+        eval_flash(map, x-1, y)
+    end
+    if x > 0 && map[x-1][y+1]
+        increment(map, x-1, y+1)
+        eval_flash(map, x-1, y+1)
+    end
+    # left, right
+    if y > 0
+        increment(map, x, y-1)
+        eval_flash(map, x, y-1)
+    end
+    if map[x][y+1]
+        increment(map, x, y+1)
+        eval_flash(map, x, y+1)
+    end
+    # down left, down, down right
+    if y > 0 && map[x+1]
+        increment(map, x+1, y-1)
+        eval_flash(map, x+1, y-1)
+    end
+    if map[x+1]
+        increment(map, x+1, y)
+        eval_flash(map, x+1, y)
+    end
+    if map[x+1] && map[x+1][y+1]
+        increment(map, x+1, y+1)
+        eval_flash(map, x+1, y+1)
+    end
+end
+
+def eval_flashes
+    puts "START EVAL ALL"
+    do_for_all(@map) do |m,x,y|
+        eval_flash(m,x,y)
+    end
+    puts "END EVAL ALL"
+end
+
+def print_map
+    (0...@map.length).each do |x|
+        (0...@map[x].length).each do |y|
+            print @map[x][y]
+        end
+        puts ""
+    end
+end 
+
+def step
+    # increase energy level of all octopii
+    increment_all
+    eval_flashes
+    reset_energies
+end
+
+puts "STEP 0"
+print_map
+puts
+
+(1..100).each do |i|
+    puts "STEP #{i}"
+    step
+    print_map
+    puts
+end
+
+puts "Flashes: #{@flash_count}"
