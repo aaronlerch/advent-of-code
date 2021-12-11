@@ -1,0 +1,54 @@
+#!/usr/bin/env ruby
+
+input = File.readlines("input.txt").map(&:chomp)
+
+OPEN_PAREN='('
+OPEN_SQUARE='['
+OPEN_CURLY='{'
+OPEN_ANGLE='<'
+CLOSE_PAREN=')'
+CLOSE_SQUARE=']'
+CLOSE_CURLY='}'
+CLOSE_ANGLE='>'
+
+opens = [OPEN_PAREN, OPEN_SQUARE, OPEN_CURLY, OPEN_ANGLE]
+closes = [CLOSE_PAREN, CLOSE_SQUARE, CLOSE_CURLY, CLOSE_ANGLE]
+
+open_close_pairs = {
+    OPEN_PAREN => CLOSE_PAREN,
+    OPEN_SQUARE => CLOSE_SQUARE,
+    OPEN_CURLY => CLOSE_CURLY,
+    OPEN_ANGLE => CLOSE_ANGLE
+}
+
+corrupt_point_map = {
+    CLOSE_PAREN => 3,
+    CLOSE_SQUARE => 57,
+    CLOSE_CURLY => 1197,
+    CLOSE_ANGLE => 25137
+}
+
+points = 0
+
+# to process a chunk we use a stack data structure (in ruby, that's an array)
+input.each do |line|
+    stack = []
+    line.chars.each do |c|
+        if opens.include? c
+            # if it's an opening, push
+            stack.push c
+        elsif closes.include? c
+            # if it's a closing, pop and verify
+            open = stack.pop
+            break if open.nil? # for now, ignore incomplete lines
+            if open_close_pairs[open] != c
+                # CORRUPTED
+                puts "Expected #{open_close_pairs[open]}, but found #{c} instead."
+                points += corrupt_point_map[c]
+                break
+            end
+        end
+    end
+end
+
+puts "POINTS: #{points}"
