@@ -1,0 +1,3 @@
+<internal:/Users/alerch/.rbenv/versions/3.0.0/lib/ruby/3.0.0/rubygems/core_ext/kernel_require.rb>:85:in `require': cannot load such file -- curses (LoadError)
+	from <internal:/Users/alerch/.rbenv/versions/3.0.0/lib/ruby/3.0.0/rubygems/core_ext/kernel_require.rb>:85:in `require'
+	from ./octo:3:in `<main>'
