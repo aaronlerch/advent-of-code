@@ -6,8 +6,7 @@ map = []
 low_points = []
 
 input.each { |line| map << line.chomp.chars.map(&:to_i) }
-
-# now we have a map (input is 100x100)
+basins = Array.new(map.length) { Array.new(map.first.length) { nil } }
 
 # for each location, evaluate if it's a low point, and if so add to low_points
 map.each_with_index do |row, x|
@@ -19,12 +18,57 @@ map.each_with_index do |row, x|
         low = false if y > 0 && map[x] && map[x][y-1] && map[x][y-1] <= value
         low = false if map[x] && map[x][y+1] && map[x][y+1] <= value
 
-        # low_points << [x,y] if low
-        if low
-            low_points << value + 1 
-            # puts "Low point: [#{x},#{y}]"
-        end
+        low_points << [x,y] if low
     end
 end
 
-puts "Found #{low_points.length} low points, total risk level: #{low_points.sum}"
+puts "Found #{low_points.length} low points"
+
+# Now that low points are found we need to turn them into basins
+# We can do this by starting with each low point and progressing out recursively
+# until every adjacent location has been marked as part of the basin, or is a 9
+# Since multiple low points can be part of the same basin, we'll check that a new low point
+# hasn't already been marked as in a basin before we process it
+
+MAX_HEIGHT = 9
+
+def fill_basin(map, basins, x, y, basin_number)
+    # don't go off the edge of the map
+    return if x < 0 || map[x] == nil
+    return if y < 0 || map[x][y] == nil
+
+    # don't mark max height locations
+    return if map[x][y] == MAX_HEIGHT
+
+    # don't process it if we've already marked a basin number
+    return if basins[x][y]
+
+    # alright, this is new! go to town.
+    basins[x][y] = basin_number
+
+    fill_basin(map, basins, x-1, y, basin_number) # left
+    fill_basin(map, basins, x+1, y, basin_number) # right
+    fill_basin(map, basins, x, y-1, basin_number) # up
+    fill_basin(map, basins, x, y+1, basin_number) # down
+end
+
+basin_number = 0
+
+low_points.each do |lp|
+    x,y = lp
+    next if basins[x][y] # if this low point is already part of a basin, move along
+    
+    basin_number += 1
+    fill_basin(map, basins, x, y, basin_number)
+end
+
+puts "Found #{basin_number} basins"
+
+# find the top 3 most frequent numbers in basins and count them
+counts = Hash.new 0
+basins.flatten.each { |b| counts[b] += 1 if b }
+
+sorted = counts.values.sort.reverse
+
+puts "Top 3: #{sorted[0]}, #{sorted[1]}, #{sorted[2]}"
+puts "Result: #{sorted[0] * sorted[1] * sorted[2]}"
