@@ -28,11 +28,20 @@ corrupt_point_map = {
     CLOSE_ANGLE => 25137
 }
 
-points = 0
+incomplete_point_map = {
+    CLOSE_PAREN => 1,
+    CLOSE_SQUARE => 2,
+    CLOSE_CURLY => 3,
+    CLOSE_ANGLE => 4
+}
+
+corrupt_points = 0
+incomplete_scores = []
 
 # to process a chunk we use a stack data structure (in ruby, that's an array)
 input.each do |line|
     stack = []
+    corrupt = false
     line.chars.each do |c|
         if opens.include? c
             # if it's an opening, push
@@ -44,11 +53,35 @@ input.each do |line|
             if open_close_pairs[open] != c
                 # CORRUPTED
                 puts "Expected #{open_close_pairs[open]}, but found #{c} instead."
-                points += corrupt_point_map[c]
+                corrupt_points += corrupt_point_map[c]
+                corrupt = true
                 break
             end
         end
     end
+
+    next if corrupt || stack.empty?
+
+    puts "unprocessed: #{stack}"
+
+    # if we got here, the line is just incomplete
+    # we need to continue to pop the stack to determine valid ending characters
+    finish = []
+    while o = stack.pop
+        finish << open_close_pairs[o]
+    end
+
+    # score the results
+    score = 0
+    finish.each do |f|
+        score *= 5
+        score += incomplete_point_map[f]
+    end
+    incomplete_scores << score
 end
 
-puts "POINTS: #{points}"
+sorted = incomplete_scores.sort
+middle = sorted[sorted.length / 2]
+
+puts "CORRUPTED POINTS: #{corrupt_points}"
+puts "INCOMPLETE SCORE: #{middle}"
