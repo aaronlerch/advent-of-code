@@ -143,6 +143,10 @@ class Map
         @ignore_pause = false
     end
 
+    def all_flashed?
+        @map.flatten.sum == 0
+    end
+
     def each
         (0...@map.length).each do |x|
             (0...@map[x].length).each do |y|

@@ -76,7 +76,16 @@ begin
     print_map
     do_pause STEP_PAUSE_LEVEL
 
-    (1..STEPS).each do |i|
+    # PART 1: Process steps to get a state at a given step
+    # (1..STEPS).each do |i|
+    #     @current_step += 1
+    #     @map.step
+    #     print_map
+    #     do_pause STEP_PAUSE_LEVEL
+    # end
+
+    # PART 2: Continue processing steps until all are simultaneously flashed
+    until @map.all_flashed? do
         @current_step += 1
         @map.step
         print_map
