@@ -1,4 +1,5 @@
 class Map
+    MAP_SIZE=10
     FLASH_THRESHOLD=10
 
     attr_reader :map, :flash_count, :highlighted, :step_description
@@ -15,8 +16,10 @@ class Map
 
         input.each { |line| @map << line.chars.map(&:to_i) }
 
-        @max_x = @map.length - 1
-        @max_y = @map.first.length - 1
+        @max_x = MAP_SIZE - 1
+        @max_y = MAP_SIZE - 1
+
+        @flashed = Array.new(MAP_SIZE) { Array.new(MAP_SIZE) { false } }
     end
 
     def flashes
@@ -43,11 +46,6 @@ class Map
             set(value, x, y)
             do_pause
         end
-        
-        # if we specifically crossed into FLASH_THRESHOLD, record it
-        if value == FLASH_THRESHOLD
-            @flash_count += 1
-        end
     end
 
     def increment_all
@@ -73,8 +71,13 @@ class Map
     def try_flash(x, y)
         value = at(x, y)
 
-        # ignore if we aren't flashing
-        return if value != FLASH_THRESHOLD
+        # no flashing if we aren't supposedd to, or have already flashed this step
+        return if value < FLASH_THRESHOLD || @flashed[x][y]
+
+        # we are higher than (or equal to) FLASH_THRESHOLD,
+        # and haven't flashed, flash!
+        @flash_count += 1
+        @flashed[x][y] = true
 
         desc "evaluting adjacent cells to [#{x},#{y}]"
 
@@ -133,6 +136,10 @@ class Map
         desc "resetting all energies"
         reset_all_energy
 
+        @ignore_pause = true
+        desc "resetting flashed tracking"
+        reset_flashed
+
         @ignore_pause = false
     end
 
@@ -153,5 +160,10 @@ class Map
     def do_pause
         return if @ignore_pause
         @pause.call
+    end
+
+    def reset_flashed
+        # reset the flashed array to a new empty array
+        @flashed = Array.new(MAP_SIZE) { Array.new(MAP_SIZE) { false } }
     end
 end

@@ -5,7 +5,9 @@ require_relative 'map'
 require_relative 'display_helper'
 
 STEPS=100
-TIME_PAUSE=0.05
+TIME_PAUSE=0.01
+INPUT_FILE="input.txt"
+HIGHLIGHT_STEPS=false
 
 PAUSE_FOR_NOTHING=0
 PAUSE_FOR_TIME=1
@@ -36,11 +38,11 @@ begin
         DisplayHelper.draw do
             Curses.setpos(0, 0)
             Curses.addstr ">>> STEP #{@current_step}"
-            Curses.setpos(1, 0)
-            blank = " " * 100
-            Curses.addstr blank
-            Curses.setpos(1, 0)
-            Curses.addstr ">>> SUB-STEP: #{@map.step_description || @step_desc}"
+            # Curses.setpos(1, 0)
+            # blank = " " * 100
+            # Curses.addstr blank
+            # Curses.setpos(1, 0)
+            # Curses.addstr ">>> SUB-STEP: #{@map.step_description || @step_desc}"
 
             offset = 2
             @map.each do |x,y,value|
@@ -49,7 +51,7 @@ begin
                     value = "*"
                 end
                 color = DisplayHelper.color_for_value(value)
-                if @map.highlighted == [x,y]
+                if HIGHLIGHT_STEPS && @map.highlighted == [x,y]
                     color = DisplayHelper::HIGHLIGHT
                 end
                 DisplayHelper.with_color(color) do
@@ -62,11 +64,13 @@ begin
         end
     end
 
-    input = File.readlines("input.txt").map(&:chomp)
+    input = File.readlines(INPUT_FILE).map(&:chomp)
     @map = Map.new input, method(:print_map), method(:do_pause)
 
     @current_step = 0
     @step_desc = ""
+
+    Curses.getch
 
     substep "initial state"
     print_map
