@@ -1,8 +1,7 @@
 require 'curses'
 
 class DisplayHelper
-    LIGHT_GREEN=34
-    GREEN=46
+    FLASHED=220
     GRAY_START=237
     HIGHLIGHT=200
     WHITE=255
@@ -26,8 +25,7 @@ class DisplayHelper
         end
 
         def color_for_value(value)
-            return DisplayHelper::LIGHT_GREEN if value == "*"
-            #return DisplayHelper::LIGHT_GREEN if value == 0
+            return DisplayHelper::FLASHED if value == "*"
             return DisplayHelper::WHITE if value * 2 > 255
             
             DisplayHelper::GRAY_START + (value.to_i * 2)
