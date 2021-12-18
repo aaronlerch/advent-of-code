@@ -27,9 +27,19 @@ def print_path(path)
     puts path.join(',')
 end
 
+def meets_criteria?(visited)
+    # we "meet criteria" if we find a condition that we are looking for, including:
+
+    # if we have a twice-visited cave, our `uniq` length will be 1 less than the length
+    visited.uniq.length == visited.length - 1
+end
+
 def visit(cave, visited, path)
     #puts "Try visit #{cave} [#{path.join(',')}]"
-    return if cave.start? || visited.include?(cave) # skip if we've visited this cave or it's the start
+    return if cave.start? # we skip the start again
+
+    # skip if we've visited and there is already a twice-visited cave
+    return if visited.include?(cave) && meets_criteria?(visited)
 
     # add this cave to our path, and track the visit state
     path << cave
@@ -58,6 +68,6 @@ start_cave = caves.values.find { |cave| cave.start? }
 
 start_cave.connections.each do |first_level|
     # reset our visited tracking for each first-level cave off "start"
-    visited = []
+    visited = [] # cave => count
     visit(first_level, visited, [start_cave])
 end
