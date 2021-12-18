@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+
+require_relative './cave'
+
+INPUT_FILE = "input.txt"
+
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+caves = {} # name lookup
+
+input.each do |c|
+    from, to = c.split '-'
+    from_cave = caves[from] || Cave.new(from)
+    to_cave = caves[to] || Cave.new(to)
+
+    from_cave.connect to_cave
+    to_cave.connect from_cave
+
+    caves[from] = from_cave
+    caves[to] = to_cave
+end
+
+# okay, recursively walk all the caves and only track small caves as visited.
+# Each time we hit "end", capture the current stack as a path.
+
+def print_path(path)
+    puts path.join(',')
+end
+
+def visit(cave, visited, path)
+    #puts "Try visit #{cave} [#{path.join(',')}]"
+    return if cave.start? || visited.include?(cave) # skip if we've visited this cave or it's the start
+
+    # add this cave to our path, and track the visit state
+    path << cave
+
+    if cave.end?
+        print_path(path)
+        path.pop # pop this cave off our path
+        return
+    end
+
+    visited << cave if cave.small?
+
+    # visit all connected caves (will short-circuit if we already visited them)
+    cave.connections.each do |c|
+        # make a copy of the visited nodes, so we only track them for a particular branch
+        visited_copy = visited.dup
+        visit(c, visited_copy, path)
+    end
+
+    # pop this cave off our path
+    path.pop
+end
+
+# find the start
+start_cave = caves.values.find { |cave| cave.start? }
+
+start_cave.connections.each do |first_level|
+    # reset our visited tracking for each first-level cave off "start"
+    visited = []
+    visit(first_level, visited, [start_cave])
+end
