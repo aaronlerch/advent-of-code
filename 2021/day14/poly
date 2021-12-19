@@ -1,0 +1,56 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+rules = {} # when -> insert
+template = input.shift
+
+input.shift # blank line
+until (line = input.shift).nil? || line.empty?
+    from, insert = line.split ' -> '
+    rules[from] = insert
+end
+
+def step(polymer, rules)
+    # iterate over polymer and apply insertion rules
+    new_polymer = ""
+    polymer.chars.each_with_index do |ch,i|
+        next_char = polymer[i+1]
+        if next_char.nil?
+            new_polymer << ch
+            next
+        end
+
+        pair = ch + next_char
+        insert = rules[pair]
+        if insert
+            new_polymer << ch + insert
+        else
+            new_polymer << ch
+        end
+    end
+
+    return new_polymer
+end
+
+puts "Template: #{template}"
+
+# STEP 1: Apply 10 steps, find most and least common elements, find most - least
+
+p = template
+(1..10).each do |i|
+    p = step(p, rules)
+    # puts "Step #{i}: #{p}"
+end
+
+# count instances of chars in p
+
+counts = p.chars.each_with_object(Hash.new(0)) do |ch, new_hash|
+    new_hash[ch] += 1
+end
+
+max_element = counts.max_by { |k,v| v }[1]
+min_element = counts.min_by { |k,v| v }[1]
+
+puts "RESULT: #{max_element - min_element}"
