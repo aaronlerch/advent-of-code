@@ -1,0 +1,79 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+dots = []
+instructions = []
+
+# Process all the coordinates
+until (line = input.shift).nil? || line.empty?
+    x,y = line.split ','
+    dots << [x.to_i,y.to_i]
+end
+
+# Process all the instructions
+until (line = input.shift).nil? || line.empty?
+    matches = line.match /fold along (x|y)=(\d+)/i
+    instructions << [matches[1], matches[2].to_i]
+end
+
+def print_dots(dots)
+    max_y = dots.max_by { |d| d[1] }[1]
+    max_x = dots.max_by { |d| d[0] }[0]
+
+    (0..max_y).each do |y|
+        (0..max_x).each do |x|
+            print (dots.include? [x,y]) ? "#" : "."
+        end
+        puts ""
+    end
+end
+
+# for each instruction, manipulate the dots.
+# when folding up:
+# every dot with y > fold position gets translated to the equivalent amount of positions
+# above the fold position (the fold position is ignored)
+# when folding left:
+# every dot with x > fold position gets translated
+
+def process_instruction(inst, dots)
+    coord, pos = inst
+    if coord == "x"
+        # fold left
+        puts "flipping left at #{pos}"
+        dots = dots.map do |d|
+            if d[0] > pos
+                new_pos = pos - (d[0] - pos)
+                [new_pos, d[1]]
+            else
+                d
+            end
+        end.uniq
+    elsif coord == "y"
+        # fold up
+        puts "flipping up at #{pos}"
+        dots = dots.map do |d|
+            if d[1] > pos
+                new_pos = pos - (d[1] - pos)
+                [d[0], new_pos]
+            else
+                d
+            end
+        end.uniq
+    else
+        puts "UNKNOWN VALUE FOR INSTRUCTION: #{coord}"
+        exit
+    end
+
+    dots
+end
+
+# PART 1: HOW MANY DOTS ARE VISIBLE AFTER ONE FLIP?
+dots = process_instruction(instructions.first, dots)
+puts "#{dots.length} dots are visible after one flip"
+
+# instructions.each do |inst|
+#     dots = process_instruction(inst, dots)
+# end
+# print_dots dots
