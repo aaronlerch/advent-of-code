@@ -41,7 +41,7 @@ def process_instruction(inst, dots)
     coord, pos = inst
     if coord == "x"
         # fold left
-        puts "flipping left at #{pos}"
+        #puts "flipping left at #{pos}"
         dots = dots.map do |d|
             if d[0] > pos
                 new_pos = pos - (d[0] - pos)
@@ -52,7 +52,7 @@ def process_instruction(inst, dots)
         end.uniq
     elsif coord == "y"
         # fold up
-        puts "flipping up at #{pos}"
+        #puts "flipping up at #{pos}"
         dots = dots.map do |d|
             if d[1] > pos
                 new_pos = pos - (d[1] - pos)
@@ -70,10 +70,11 @@ def process_instruction(inst, dots)
 end
 
 # PART 1: HOW MANY DOTS ARE VISIBLE AFTER ONE FLIP?
-dots = process_instruction(instructions.first, dots)
-puts "#{dots.length} dots are visible after one flip"
+# dots = process_instruction(instructions.first, dots)
+# puts "#{dots.length} dots are visible after one flip"
 
-# instructions.each do |inst|
-#     dots = process_instruction(inst, dots)
-# end
-# print_dots dots
+# PART 2: ALL THE INSTRUCTIONS
+instructions.each do |inst|
+    dots = process_instruction(inst, dots)
+end
+print_dots dots
