@@ -12,45 +12,67 @@ until (line = input.shift).nil? || line.empty?
     rules[from] = insert
 end
 
-def step(polymer, rules)
-    # iterate over polymer and apply insertion rules
-    new_polymer = ""
-    polymer.chars.each_with_index do |ch,i|
+def initialize_pairs(polymer)
+    pairs = Hash.new(0)
+    polymer.chars.each_with_index do |ch, i|
         next_char = polymer[i+1]
-        if next_char.nil?
-            new_polymer << ch
-            next
-        end
-
-        pair = ch + next_char
-        insert = rules[pair]
-        if insert
-            new_polymer << ch + insert
-        else
-            new_polymer << ch
+        unless next_char.nil?
+            pair = ch + next_char
+            pairs[pair] += 1
         end
     end
+    return pairs
+end
 
-    return new_polymer
+def step(pairs, rules)
+    # iterate over pairs and apply insertion rules
+    new_pairs = Hash.new(0)
+
+    pairs.each do |pair, count|
+        insert = rules[pair]
+        next if insert.nil?
+
+        first = pair[0] + insert
+        second = insert + pair[1]
+
+        # For as many original pairs as we were tracking, we add the same number of new pairs
+        new_pairs[first] += count
+        new_pairs[second] += count
+    end
+    return new_pairs
+end
+
+def count_of_unique_elements(pairs)
+    elements = Hash.new(0) # element -> count
+    pairs.each do |pair, count|
+        elements[pair[0]] += count
+    end
+    return elements
 end
 
 puts "Template: #{template}"
 
 # STEP 1: Apply 10 steps, find most and least common elements, find most - least
+# STEP 2: Apply 40 steps
 
-p = template
-(1..10).each do |i|
-    p = step(p, rules)
-    # puts "Step #{i}: #{p}"
+STEPS=40
+
+pairs = initialize_pairs(template)
+last_element = template[template.length - 1]
+
+(1..STEPS).each do |i|
+    pairs = step(pairs, rules)
 end
 
-# count instances of chars in p
+elements = count_of_unique_elements(pairs)
 
-counts = p.chars.each_with_object(Hash.new(0)) do |ch, new_hash|
-    new_hash[ch] += 1
-end
+# add back in the last element which got excluded in the algorithm above
+elements[last_element] += 1
 
-max_element = counts.max_by { |k,v| v }[1]
-min_element = counts.min_by { |k,v| v }[1]
+max_element = elements.max_by { |k,v| v }
+min_element = elements.min_by { |k,v| v }
 
-puts "RESULT: #{max_element - min_element}"
+puts "MAX ELEMENT: #{max_element[0]} (#{max_element[1]})"
+puts "MIN ELEMENT: #{min_element[0]} (#{min_element[1]})"
+
+puts "RESULT: #{max_element[1] - min_element[1]}"
