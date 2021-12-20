@@ -6,14 +6,69 @@ input = File.readlines(INPUT_FILE).map(&:chomp)
 risks = []
 input.each { |line| risks << line.chars.map(&:to_i) }
 
-max_x = risks.first.length - 1
-max_y = risks.length - 1
+@max_x = risks.first.length - 1
+@max_y = risks.length - 1
 
 # We need to find the lowest risk path from top left to bottom right
 
 # I'm going to take a naive approach at first:
-# - follow the lowest adjacent risk moving down and to the right
+# - follow the cheapest path to the right or down
 # - when reaching the end, pop the stack and try the next-lowest
 #   risk level
 # - on all steps, never visit a location twice (if we did, it would
 #   automatically be "more expensive" because we would have wasted travel)
+
+@lowest_path = nil
+
+def visit(risks, pos, path_sum)
+    x, y = pos
+    return if x < 0 || y < 0 || x > @max_x || y > @max_y # we're outside the bounds, ignore
+    # return if path.include?(pos) # we done been here before, get out!
+    # return if pos == [0,0] # start position is special, we don't include it
+
+    # puts "Visit [#{pos[0]},#{pos[1]}]"
+
+    # Add the risk from the current position unless we're at the start
+    path_sum += risks[x][y] unless pos == [0,0]
+    if @lowest_path && path_sum > @lowest_path # if this move makes our path higher than the lowest, abandon the effort
+        #puts "Skipping after [#{x},#{y}] because #{path_sum} is already higher than #{@lowest_path}"
+        return
+    end
+
+    if pos == [@max_x, @max_y]
+        # this is the end, we made it!
+        if @lowest_path.nil? || path_sum < @lowest_path
+            @lowest_path = path_sum
+            puts "New lowest: #{@lowest_path}"
+        end
+
+        return
+    end
+
+    # try right, down, starting with the lowest
+    right = risks[x+1][y] if x < @max_x
+    down = risks[x][y+1] if y < @max_y
+
+    if right && down && right <= down
+        # puts "Choosing right #{right} over down #{down}"
+        visit(risks, [x+1, y], path_sum)
+        visit(risks, [x, y+1], path_sum)
+    elsif right && down && down < right
+        # puts "Choosing down #{down} over right #{right}"
+        visit(risks, [x, y+1], path_sum)
+        visit(risks, [x+1, y], path_sum)
+    elsif right && down.nil?
+        # puts "Choosing right #{right}"
+        visit(risks, [x+1, y], path_sum)
+    elsif down && right.nil?
+        # puts "Choosing down #{down}"
+        visit(risks, [x, y+1], path_sum)
+    end
+end
+
+start = [0,0]
+path_sum = 0
+
+visit(risks, start, path_sum)
+
+puts "Lowest risk path is: #{@lowest_path}"
