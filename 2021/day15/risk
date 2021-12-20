@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+risks = []
+input.each { |line| risks << line.chars.map(&:to_i) }
+
+max_x = risks.first.length - 1
+max_y = risks.length - 1
+
+# We need to find the lowest risk path from top left to bottom right
+
+# I'm going to take a naive approach at first:
+# - follow the lowest adjacent risk moving down and to the right
+# - when reaching the end, pop the stack and try the next-lowest
+#   risk level
+# - on all steps, never visit a location twice (if we did, it would
+#   automatically be "more expensive" because we would have wasted travel)
