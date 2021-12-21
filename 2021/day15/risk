@@ -11,6 +11,8 @@ input.each { |line| grid << line.chars.map(&:to_i) }
 @max_y = grid.length - 1
 @max_x = grid.first.length - 1
 
+puts "Initializing nodes"
+
 # Create one node per location (to reuse objects)
 nodes = {}
 (0..@max_y).each do |y|
@@ -19,81 +21,22 @@ nodes = {}
     end
 end
 
-# turn the grid into a tree of nodes
-def attach_neighbors(node, nodes)
-    # ignore if we've already connected this node
-    return if connected_nodes.include? node
+puts "Initialized nodes"
+puts "Initializing node neighbors"
 
-    # capture this node as already connected
-    connected_nodes << node
-
-    # build the nodes from this node's location
-    x, y = node.x, node.y
-
-    # try right, down, left, up
-    neighbors = [nodes[[y,x+1]], nodes[[y+1,x]], nodes[[y,x-1]], nodes[[y-1,x]]].compact.sort_by { |n| n.value }
-
-    # add the neighbors
-    neighbors.each { |c| node.add_neighbor(c) }
-
-    # connect each neighbor to their nodes
-    neighbors.each { |c| connect_neighbor_nodes(c, connected_nodes, nodes) }
-end
-
+# Now for each node, connect it's neighbors
 (0..@max_y).each do |y|
     (0..@max_x).each do |x|
-        # For each node, attach it's neighbors
-        attach_neighbors(nodes[[y,x]], nodes)
+        node = nodes[[y,x]]
+        # all neighbors
+        #node.neighbors = [nodes[[y,x+1]], nodes[[y+1,x]], nodes[[y,x-1]], nodes[[y-1,x]]].compact.sort_by { |n| n.value }
+        # right and down only
+        node.neighbors = [nodes[[y,x+1]], nodes[[y+1,x]]].compact.sort_by { |n| n.value }
     end
 end
 
-start_node = nodes[0][0]
-goal_node = nodes[@max_y][@max_x]
-connect_neighbor_nodes(start_node, connected_nodes, nodes)
-
-puts "Connected nodes: #{connected_nodes.length}"
-
-# Starting with each child of the start_node,
-# compute the length until the end node is reached, OR
-# until our current sum of values is > the known lowest path
-
-# @lowest_path = nil
-
-# def visit(node, risk, visited)
-#     return if visited.include? node
-
-#     # puts "Visiting #{node}"
-#     # we are visiting this node
-#     visited << node
-
-#     risk += node.value
-#     # exit here if we are cutting off this branch
-#     if @lowest_path && risk > @lowest_path
-#         visited.pop
-#         return
-#     end
-
-#     if node.finish?
-#         @lowest_path = risk if @lowest_path.nil? || @lowest_path > risk
-#         puts "END: risk=#{risk}, lowest_path=#{@lowest_path}"
-#         visited.pop
-#         return
-#     end
-
-#     node.children.each do |child|
-#         visit(child, risk, visited)
-#     end
-
-#     # pop ourselves from the visit tracking before returning
-#     visited.pop
-# end
-
-# start_node.children.each do |node|
-#     visit(node, 0, [start_node])
-# end
-
-#puts "Lowest risk path is: #{@lowest_path || 'NONE'}"
-
+start_node = nodes[[0,0]]
+goal_node = nodes[[@max_y,@max_x]]
 
 # Implement an A* search algorithm
 
@@ -115,33 +58,34 @@ def a_star(start, goal, h)
     f_score[start] = h.call(start)
 
     while !open_set.empty?
-        current = open_set.first # assumes sorted by cost (node.value for us)
+        current = open_set.first # assumes sorted by current f_score value
         if current == goal
             return reconstruct_path(came_from, current)
         end
 
         open_set.delete current
 
-        current.children.each do |child|
-            tentative_g_score = g_score[current] + child.value
-            if tentative_g_score < g_score[child]
-                came_from[child] = current
-                g_score[child] = tentative_g_score
-                f_score[child] = tentative_g_score + h.call(child)
-                unless open_set.include? child
-                    open_set << child
+        current.neighbors.each do |neighbor|
+            tentative_g_score = g_score[current] + neighbor.value
+            if tentative_g_score < g_score[neighbor]
+                came_from[neighbor] = current
+                g_score[neighbor] = tentative_g_score
+                f_score[neighbor] = tentative_g_score + h.call(neighbor)
+                unless open_set.include? neighbor
+                    open_set << neighbor
                 end
             end
         end
 
-        open_set.sort_by! { |n| n.value }
+        open_set.sort_by! { |n| f_score[n] }
     end
 end
 
-path = a_star(start_node, goal_node, -> (node) { node.value })
+puts "Running the A* algorithm"
 
+path = a_star(start_node, goal_node, -> (node) { node.value })
 result = path.sum { |n| n.value } - start_node.value
 
 puts "Risk of best path: #{result}"
 
-puts path
+#puts path
