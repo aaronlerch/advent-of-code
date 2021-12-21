@@ -1,12 +1,15 @@
 #!/usr/bin/env ruby
 
 require_relative './node'
+require_relative './map_expander'
 
 INPUT_FILE = "input.txt"
 input = File.readlines(INPUT_FILE).map(&:chomp)
 
 grid = []
 input.each { |line| grid << line.chars.map(&:to_i) }
+
+grid = MapExpander.expand(grid)
 
 @max_y = grid.length - 1
 @max_x = grid.first.length - 1
