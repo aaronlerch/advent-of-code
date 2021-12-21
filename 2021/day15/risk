@@ -2,7 +2,7 @@
 
 require_relative './node'
 
-INPUT_FILE = "example.txt"
+INPUT_FILE = "input.txt"
 input = File.readlines(INPUT_FILE).map(&:chomp)
 
 grid = []
@@ -24,14 +24,14 @@ end
 puts "Initialized nodes"
 puts "Initializing node neighbors"
 
-# Now for each node, connect it's neighbors
+# Now for each node, connect the neighbors
 (0..@max_y).each do |y|
     (0..@max_x).each do |x|
         node = nodes[[y,x]]
         # all neighbors
-        #node.neighbors = [nodes[[y,x+1]], nodes[[y+1,x]], nodes[[y,x-1]], nodes[[y-1,x]]].compact.sort_by { |n| n.value }
+        node.neighbors = [nodes[[y,x+1]], nodes[[y+1,x]], nodes[[y,x-1]], nodes[[y-1,x]]].compact.sort_by { |n| n.value }
         # right and down only
-        node.neighbors = [nodes[[y,x+1]], nodes[[y+1,x]]].compact.sort_by { |n| n.value }
+        #node.neighbors = [nodes[[y,x+1]], nodes[[y+1,x]]].compact.sort_by { |n| n.value }
     end
 end
 
@@ -88,4 +88,4 @@ result = path.sum { |n| n.value } - start_node.value
 
 puts "Risk of best path: #{result}"
 
-#puts path
+# puts path
