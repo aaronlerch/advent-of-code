@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+elfs = []
+index = 0
+
+input.each do |entry|
+  if entry == nil || entry.length == 0
+    index += 1
+  else
+    cals = entry.to_i
+    elfs[index] ||= 0
+    elfs[index] += cals
+  end
+end
+
+puts "Found #{elfs.length} elfs"
+max = elfs.each_with_index.max
+puts "Elf #{max[1]} has #{max[0]} calories"
