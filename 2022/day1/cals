@@ -17,5 +17,15 @@ input.each do |entry|
 end
 
 puts "Found #{elfs.length} elfs"
-max = elfs.each_with_index.max
+maxes = elfs.each_with_index.max(3)
+
+puts "Part 1: top elf"
+max = maxes[0]
 puts "Elf #{max[1]} has #{max[0]} calories"
+
+puts "Part 2: top 3 elves"
+maxes.each do |m|
+  puts "Elf #{m[1]} has #{m[0]} calories"
+end
+total = maxes.map {|m| m[0]}.sum
+puts "Total calories: #{total}"
