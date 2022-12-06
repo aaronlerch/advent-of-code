@@ -3,46 +3,39 @@
 INPUT_FILE = "input.txt"
 input = File.readlines(INPUT_FILE).map(&:chomp)
 
-THROW_MAP = { 'A' => :rock, 'X' => :rock, 'B' => :paper, 'Y' => :paper, 'C' => :scissors, 'Z' => :scissors }
+THROW_MAP = { 'A' => :rock, 'B' => :paper, 'C' => :scissors }
+OUTCOME_MAP = { 'X' => 0, 'Y' => 3, 'Z' => 6 }
 SCORES = { rock: 1, paper: 2, scissors: 3 }
 
-def score(opponent, player)
+def score(opponent, outcome)
   o = THROW_MAP[opponent]
-  p = THROW_MAP[player]
+  result = OUTCOME_MAP[outcome]
   o_score = SCORES[o]
-  p_score = SCORES[p]
-  battle = p_score - o_score
 
-  # draw scores
-  # anything - anything = 0
-
-  # winning scores
-  # 1 - 3 = -2
-  # 2 - 1 = 1
-  # 3 - 2 = 1
-
-  # losing scores
-  # 1 - 2 = -1
-  # 2 - 3 = -1
-  # 3 - 1 = 2
-
-  if battle == 0
-    return p_score + 3 # tie
-  elsif battle == -2 || battle == 1
-    return p_score + 6 # win
-  elsif battle == -1 || battle == 2
-    return p_score + 0 # lose
-  else
-    raise "oops, invalid battle score: #{battle}"
+  p_score = case result
+    when 0
+      o_score - 1
+    when 3
+      o_score
+    when 6
+      o_score + 1
   end
+
+  if p_score == 0
+    p_score = 3
+  elsif p_score > 3
+    p_score = 1
+  end 
+
+  return p_score + result
 end
 
 total_score = 0
 rounds = 0
 
 input.each do |round|
-  o,p = round.split(' ')
-  total_score += score(o,p)
+  opponent, outcome = round.split(' ')
+  total_score += score(opponent, outcome)
   rounds += 1
 end
 
