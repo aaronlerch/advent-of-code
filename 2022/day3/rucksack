@@ -1,0 +1,30 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+# ['a','z','A','Z'].map(&:ord)
+# [97, 122, 65, 90]
+
+def priority(char)
+  if char.ord > 97
+    char.ord - 96
+  else
+    char.ord - 38
+  end
+end
+
+priorities = 0
+
+input.each do |line|
+  len = line.length
+  first = line[0..(len/2-1)].split("")
+  second = line[len/2..len].split("")
+
+  same = first & second
+  same.each do |ch|
+    priorities += priority(ch)
+  end
+end
+
+puts "Sum of priorities: #{priorities}"
