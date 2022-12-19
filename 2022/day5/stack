@@ -1,0 +1,79 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+STACKS_FILE = "stacks_input.txt"
+stack_input = File.readlines(STACKS_FILE).map(&:chomp)
+
+NUM_STACKS = 9 # this was in the input, I'm just hardcoding it
+
+# initialize a blank array of NUM_STACKS of empty arrays
+stacks = Array.new(NUM_STACKS) { [] }
+
+def print_stacks(stacks)
+  output = []
+  drew_any = true
+  layer = 0
+  labels = ""
+  (1..NUM_STACKS).each { |i| labels << " #{i}  " }
+  output << labels
+  while (drew_any)
+    drew_any = false
+    line = ""
+    (0..NUM_STACKS-1).each do |idx|
+      stack = stacks[idx]
+      crate = stack[layer]
+      if crate 
+        drew_any = true
+        line << "[#{crate}] "
+      else
+        line << "    "
+      end
+    end
+    layer += 1
+    output << line if drew_any
+  end
+
+  output.reverse.each do |line|
+    puts line
+  end
+end
+
+stack_input.reverse.each do |layer|
+  m = layer.scan /\[.\]|\s{4}/
+  m.each_with_index do |crate, idx|
+    next if crate.strip.length == 0
+    crate_id = crate.match(/\[(\S)\]/)[1]
+    stacks[idx] << crate_id
+  end
+end
+
+puts "=== STARTING STACKS ==="
+print_stacks(stacks)
+puts "======================="
+
+# process input
+
+input.each do |line|
+  m = line.match /move (?<amount>\d+) from (?<src>\d+) to (?<dest>\d+)/i
+  amount = m[:amount].to_i
+  src = m[:src].to_i - 1
+  dest = m[:dest].to_i - 1
+
+  amount.times do
+    crate = stacks[src].pop
+    stacks[dest] << crate
+  end
+end
+
+puts "=== ENDING STACKS ==="
+print_stacks(stacks)
+puts "====================="
+
+puts ""
+
+puts "Top crate on each stack:"
+stacks.each do |s|
+  print s.last
+end
