@@ -61,10 +61,15 @@ input.each do |line|
   src = m[:src].to_i - 1
   dest = m[:dest].to_i - 1
 
-  amount.times do
-    crate = stacks[src].pop
-    stacks[dest] << crate
-  end
+  # part 2 -- move crates in order
+  crates = stacks[src].pop(amount)
+  stacks[dest] += crates
+
+  # part 1 -- crates move one at a time
+  # amount.times do
+  #   crate = stacks[src].pop
+  #   stacks[dest] << crate
+  # end
 end
 
 puts "=== ENDING STACKS ==="
