@@ -1,0 +1,95 @@
+#!/usr/bin/env ruby
+
+require 'pp'
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+# every fs entry is
+# name: { type: :file, size: 1234 }
+# or
+# name: { type: dir, size: 1234, children: {} }
+# where size == aggregate size for a directory
+
+ROOT = "/"
+
+fs = {
+  "/" => { type: :dir, size: 0, children: {} }
+}
+path = []
+current = fs[ROOT]
+
+def traverse_to(fs, path)
+  location = fs[ROOT]
+  path.each do |name|
+    # assume we're only navigating directories in the path
+    location = location[:children][name]
+  end
+  location
+end
+
+# Process the input and build a directory tree
+input.each do |cmd|
+  case cmd
+  when /\$ (cd|ls)(.*)/
+    # $1 is the cmd, $2 is an arg
+    if $1 == "cd"
+      dir_arg = $2.strip
+      case dir_arg
+      when ROOT
+        path = []
+        current = fs[ROOT]
+      when ".."
+        path.pop
+        current = traverse_to(fs, path)
+      else
+        path << dir_arg
+        current = traverse_to(fs, path)
+      end
+    end
+  when /dir (\S+)/
+    # $1 is the directory name to log
+    new_dir_name = $1.strip
+    current[:children][new_dir_name] = { type: :dir, size: 0, children: {} }
+  when /(\d+) (\S+)/
+    # $1 is the size, $2 is the filename
+    size = $1.strip.to_i
+    fname = $2.strip
+    current[:children][fname] = { type: :file, size: size }
+  end
+end
+
+puts "Built the filesystem"
+# pp fs
+
+# Part one: size all directories
+# find all with sizes at most 100000
+
+def size_dir(dir)
+  # process all subdirs first, then total those with files to create size of current dir
+  dirs = dir[:children].select { |k,v| v[:type] == :dir }
+  files = dir[:children].select { |k,v| v[:type] == :files }
+
+  dirs.values.each do |v|
+    size_dir(v)
+  end
+
+  dir[:size] = dir[:children].values.sum { |i| i[:size] }
+end
+
+puts "Sized the filesystem"
+size_dir(fs[ROOT])
+
+$total_dir_sizes = 0
+
+def log_dir(dir)
+  $total_dir_sizes += dir[:size] if dir[:size] <= 100000
+  dirs = dir[:children].select { |k,v| v[:type] == :dir }
+  dirs.values.each do |d|
+    log_dir(d)
+  end
+end
+
+log_dir(fs[ROOT])
+
+puts "Total size of all dirs with max 100000: #{$total_dir_sizes}"
