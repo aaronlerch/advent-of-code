@@ -14,17 +14,22 @@ def priority(char)
   end
 end
 
+def find_same_in(first, second, third)
+  first.split("") & second.split("") & third.split("")
+end
+
 priorities = 0
 
-input.each do |line|
-  len = line.length
-  first = line[0..(len/2-1)].split("")
-  second = line[len/2..len].split("")
+# process each 3 lines in a group
 
-  same = first & second
+group = input.slice!(0, 3)
+while (group != nil && group.length == 3)
+  same = find_same_in(group[0], group[1], group[2])
   same.each do |ch|
     priorities += priority(ch)
   end
-end
+
+  group = input.slice!(0, 3)
+end 
 
 puts "Sum of priorities: #{priorities}"
