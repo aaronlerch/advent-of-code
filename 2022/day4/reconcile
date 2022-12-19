@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+coverage = 0
+
+input.each do |line|
+  m = line.match /(\d+)-(\d+),(\d+)-(\d+)/
+  r1 = (m[1].to_i .. m[2].to_i)
+  r2 = (m[3].to_i .. m[4].to_i)
+  
+  if (r1.cover?(r2) || r2.cover?(r1))
+    coverage += 1
+  end
+end
+
+puts "Fully covered ranges: #{coverage}"
