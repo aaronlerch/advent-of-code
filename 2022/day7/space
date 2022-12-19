@@ -77,19 +77,33 @@ def size_dir(dir)
   dir[:size] = dir[:children].values.sum { |i| i[:size] }
 end
 
-puts "Sized the filesystem"
 size_dir(fs[ROOT])
+puts "Sized the filesystem"
 
-$total_dir_sizes = 0
+TOTAL_DISK=70000000
+REQ_MIN_FREE=30000000
 
-def log_dir(dir)
-  $total_dir_sizes += dir[:size] if dir[:size] <= 100000
-  dirs = dir[:children].select { |k,v| v[:type] == :dir }
-  dirs.values.each do |d|
-    log_dir(d)
+$current_used_size = fs[ROOT][:size]
+$current_unused = TOTAL_DISK-$current_used_size
+$need_to_find = REQ_MIN_FREE-$current_unused
+
+# find the smallest directory that is larger than `need_to_find`
+
+$current_smallest_dir_size = TOTAL_DISK # we've got to find something smaller than this
+
+def find_dir(dir)
+  sz = dir[:size]
+  $current_smallest_dir_size = sz if sz < $current_smallest_dir_size && sz >= $need_to_find
+  # we only need to traverse children if the current size is bigger than what we need to find
+  # by definition, if our current size isn't big enough, going deeper in the tree is wasteful
+  if sz > $need_to_find
+    dirs = dir[:children].select { |k,v| v[:type] == :dir }
+    dirs.values.each do |d|
+      find_dir(d)
+    end
   end
 end
 
-log_dir(fs[ROOT])
+find_dir(fs[ROOT])
 
-puts "Total size of all dirs with max 100000: #{$total_dir_sizes}"
+puts "Smallest dir size found: #{$current_smallest_dir_size}"
