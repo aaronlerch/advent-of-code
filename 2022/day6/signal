@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+datastream = input[0]
+len = datastream.length
+
+START_OF_PACKET_LEN = 4
+idx = 4
+
+while (idx < len)
+  test = datastream[idx-START_OF_PACKET_LEN..idx-1]
+  ch = test.chars
+  if ch.length == ch.uniq.length
+    puts "Start of packet #{test} is at #{idx}"
+    break
+  end
+  idx += 1
+end
+
+puts "Done."
