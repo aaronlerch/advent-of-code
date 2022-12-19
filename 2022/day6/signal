@@ -7,10 +7,14 @@ datastream = input[0]
 len = datastream.length
 
 START_OF_PACKET_LEN = 4
-idx = 4
+START_OF_MSG_LEN = 14
+
+DETECT = START_OF_MSG_LEN
+
+idx = DETECT
 
 while (idx < len)
-  test = datastream[idx-START_OF_PACKET_LEN..idx-1]
+  test = datastream[idx-DETECT..idx-1]
   ch = test.chars
   if ch.length == ch.uniq.length
     puts "Start of packet #{test} is at #{idx}"
