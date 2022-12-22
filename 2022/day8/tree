@@ -1,0 +1,79 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+trees = Array.new(input.first.length)
+
+# read input into grid of trees
+idx = 0
+input.each do |row|
+  trees[idx] = row.split('').map(&:to_i)
+  idx += 1
+end
+
+
+
+TREES_ROWS = trees.length
+TREES_COLS = trees.first.length
+
+puts "Tree grid #{TREES_ROWS} x #{TREES_COLS}"
+
+def tree_is_visible(row, col, grid, max_rows, max_cols)
+  tree = grid[row][col]
+  puts "Checking tree #{row}x#{col} (#{tree})"
+
+  return false if tree == 0 # interior trees of the shortest size can never be seen
+
+  west, east, north, south = true
+
+  # look for taller trees to the west
+  (col-1).downto(0).each do |_col|
+    if grid[row][_col] >= tree
+      puts "#{row}x#{_col} (#{grid[row][_col]}) obscures west"
+      west = false
+      break
+    end
+  end
+  # look for taller trees to the east
+  (col+1..max_cols).each do |_col|
+    if grid[row][_col] >= tree
+      puts "#{row}x#{_col} (#{grid[row][_col]}) obscures east"
+      east = false
+      break
+    end
+  end
+  # look for taller trees to the north
+  (row-1).downto(0).each do |_row|
+    if grid[_row][col] >= tree
+      puts "#{_row}x#{col} (#{grid[_row][col]}) obscures north"
+      north = false
+      break
+    end
+  end
+  # look for taller trees to the south
+  (row+1..max_rows).each do |_row|
+    if grid[_row][col] >= tree
+      puts "#{_row}x#{col} (#{grid[_row][col]}) obscures south"
+      south = false
+      break
+    end
+  end
+
+  return west || east || north || south
+end
+
+# we know all border trees are visible, so count them (don't double count the corners)
+visible_trees = TREES_ROWS * 2 + TREES_COLS * 2 - 4
+
+MAX_COLS = TREES_COLS-1
+MAX_ROWS = TREES_ROWS-1
+
+# Check all interior trees
+(1..TREES_ROWS-2).each do |row|
+  (1..TREES_COLS-2).each do |col|
+    visible_trees += 1 if tree_is_visible(row, col, trees, MAX_ROWS, MAX_COLS)
+  end
+end
+
+puts "Visible trees: #{visible_trees}"
