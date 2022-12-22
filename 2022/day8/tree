@@ -12,25 +12,26 @@ MAX_Y = input.length
 # read input into tree map
 input.each_with_index do |row,y|
   row.split('').each_with_index do |t,x|
-    trees[[x,y]] = t
+    trees[[x,y]] = t.to_i
   end
 end
 
-puts "Tree grid #{MAX_X} x #{MAX_Y}"
+puts "Tree grid #{MAX_X}x#{MAX_Y}"
 
 def log(x,y,val,dir)
-  puts "#{x}x#{y} (#{val}) obscures #{dir}"
+  #puts "#{x}x#{y} (#{val}) obscures #{dir}"
 end
 
 def tree_is_visible(x, y, grid)
-  coord = [x,y]
-  tree = grid[coord]
-  puts "Checking tree #{x}x#{y} (#{tree})"
+  tree = grid[[x,y]]
+  #puts "Checking tree #{x}x#{y} (#{tree})"
+
+  return true if x == 0 || y == 0 || x == MAX_X-1 || y == MAX_Y-1 # edge trees are always seen
 
   return false if tree == 0 # interior trees of the shortest size can never be seen
 
   # Assume visible on all sides until proven obscured
-  west, east, north, south = true
+  west = east = north = south = true
 
   # look for taller trees to the west
   (x-1).downto(0).each do |_x|
@@ -43,7 +44,7 @@ def tree_is_visible(x, y, grid)
   end
 
   # look for taller trees to the east
-  (x+1..MAX_X-2).each do |_x|
+  (x+1..MAX_X-1).each do |_x|
     val = grid[[_x,y]]
     if val >= tree
       log(_x,y,val,"east")
@@ -63,7 +64,7 @@ def tree_is_visible(x, y, grid)
   end
 
   # look for taller trees to the south
-  (y+1..MAX_Y-2).each do |_y|
+  (y+1..MAX_Y-1).each do |_y|
     val = grid[[x,_y]]
     if val >= tree
       log(x,_y,val,"south")
@@ -76,13 +77,29 @@ def tree_is_visible(x, y, grid)
 end
 
 # we know all border trees are visible, so count them (don't double count the corners)
-visible_trees = MAX_X * 2 + MAX_Y * 2 - 4
+vtrees = {}
+#visible_trees = MAX_X * 2 + MAX_Y * 2 - 4
+visible_trees = 0
 
-# Check all interior trees
-(1..MAX_X-2).each do |x|
-  (1..MAX_Y-2).each do |y|
-    visible_trees += 1 if tree_is_visible(x, y, trees)
+# Check all trees
+(0..MAX_Y-1).each do |y|
+  (0..MAX_X-1).each do |x|
+    if tree_is_visible(x, y, trees)
+      visible_trees += 1
+      vtrees[[x,y]] = trees[[x,y]]
+    end
   end
 end
 
 puts "Visible trees: #{visible_trees}"
+
+puts
+puts
+
+# write out visible tree map
+(0..MAX_Y-1).each do |y|
+  (0..MAX_X-1).each do |x|
+    print (vtrees[[x,y]] != nil ? vtrees[[x,y]] : " ")
+  end
+  puts
+end
