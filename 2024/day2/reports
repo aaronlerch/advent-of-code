@@ -4,20 +4,25 @@ INPUT_FILE = "input.txt"
 input = File.readlines(INPUT_FILE).map(&:chomp)
 
 def safe?(list)
+  unsafe_count = 0
   direction = nil
   (1...list.length).each do |i|
     # unsafe if direction changes, is zero, or abs(delta) < 1 or > 3
     delta = list[i-1] - list[i]
-    return false if delta == 0
-    return false if delta.abs < 1 || delta.abs > 3
+    if delta == 0 || delta.abs < 1 || delta.abs > 3
+      unsafe_count +=1
+    end
 
-    new_direction = delta / delta.abs
-    return false if direction && new_direction != direction
-
-    direction = new_direction
+    if delta != 0
+      new_direction = delta / delta.abs
+      if direction && new_direction != direction
+        unsafe_count += 1
+      end
+      direction = new_direction
+    end
   end
 
-  return true
+  return unsafe_count <= 1
 end
 
 reports = []
