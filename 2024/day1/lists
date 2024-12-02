@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+list1 = []
+list2 = []
+
+input.each do |i|
+  a,b = i.split ' '
+  list1 << a.to_i
+  list2 << b.to_i
+end
+
+list1.sort!
+list2.sort!
+
+total_distance = 0
+
+(0...list1.length).each do |i|
+  total_distance += (list1[i] - list2[i]).abs
+end
+
+puts "Distance: #{total_distance}"
