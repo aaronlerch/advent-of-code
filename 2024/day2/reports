@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+def safe?(list)
+  direction = nil
+  (1...list.length).each do |i|
+    # unsafe if direction changes, is zero, or abs(delta) < 1 or > 3
+    delta = list[i-1] - list[i]
+    return false if delta == 0
+    return false if delta.abs < 1 || delta.abs > 3
+
+    new_direction = delta / delta.abs
+    return false if direction && new_direction != direction
+
+    direction = new_direction
+  end
+
+  return true
+end
+
+reports = []
+
+input.each do |i|
+  reports << i.split.map(&:to_i)
+end
+
+safe_count = 0
+
+reports.each do |r|
+  if safe?(r)
+    safe_count += 1
+  end
+end
+
+puts "Safe: #{safe_count}"
