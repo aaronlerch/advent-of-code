@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+result = 0
+
+input.each do |line|
+  matches = line.scan /mul\((\d+),(\d+)\)/
+  matches.each do |m|
+    a,b = m
+    result += (a.to_i * b.to_i)
+  end
+end
+
+puts "Result: #{result}"
