@@ -5,6 +5,44 @@ input = File.readlines(INPUT_FILE).map(&:chomp)
 
 grid = input.map(&:chars)
 
+X_MAS_TESTS = [
+  [["M", nil, "S"],
+   [nil, "A", nil],
+   ["M", nil, "S"]],
+
+  [["M", nil, "M"],
+   [nil, "A", nil],
+   ["S", nil, "S"]],
+
+  [["S", nil, "S"],
+   [nil, "A", nil],
+   ["M", nil, "M"]],
+
+  [["S", nil, "M"],
+   [nil, "A", nil],
+   ["S", nil, "M"]]
+]
+
+def is_x_mas(grid, x, y)
+  return false unless y >= 1 && x >= 1
+
+  # slice the 3x3 (tbt) out of the grid
+  tbt = grid.slice(y-1..y+1).map { |col| col.slice(x-1..x+1) }
+  return false if tbt.length != 3 || tbt[0].length != 3
+
+  # reset the characters we don't care about
+  tbt[0][1] = nil
+  tbt[1][0] = nil
+  tbt[1][2] = nil
+  tbt[2][1] = nil
+
+  X_MAS_TESTS.each do |test|
+    return true if tbt == test
+  end
+
+  return false
+end
+
 def count_words_at(grid, x, y)
   words = 0
 
@@ -44,6 +82,7 @@ rows = grid.length
 cols = grid.dig(0).length
 
 word_count = 0
+x_mas_count = 0
 
 (0...rows).each do |y|
   (0...cols).each do |x|
@@ -53,7 +92,13 @@ word_count = 0
       word_count += count_words_at(grid, x, y)
     end
 
+    if grid.dig(y,x) == 'A'
+      # Check for an X-MAS
+      x_mas_count += 1 if is_x_mas(grid, x, y)
+    end
+
   end
 end
 
-puts "Words found: #{word_count}"
+puts "XMAS words found: #{word_count}"
+puts "X-MAS found: #{x_mas_count}"
