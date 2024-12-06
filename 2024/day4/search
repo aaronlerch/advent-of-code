@@ -1,0 +1,59 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+grid = input.map(&:chars)
+
+def count_words_at(grid, x, y)
+  words = 0
+
+  if y >= 3 && x >= 3
+    # check upper left
+    words += 1 if grid.dig(y-1,x-1) == 'M' && grid.dig(y-2,x-2) == 'A' && grid.dig(y-3,x-3) == 'S'
+  end
+
+  if y >= 3
+    # check straight up
+    words += 1 if grid.dig(y-1,x) == 'M' && grid.dig(y-2,x) == 'A' && grid.dig(y-3,x) == 'S'
+    # check upper right
+    words += 1 if grid.dig(y-1,x+1) == 'M' && grid.dig(y-2,x+2) == 'A' && grid.dig(y-3,x+3) == 'S'
+  end
+
+  if x >= 3
+    # check left
+    words += 1 if grid.dig(y,x-1) == 'M' && grid.dig(y,x-2) == 'A' && grid.dig(y,x-3) == 'S'
+
+    # check down left
+    words += 1 if grid.dig(y+1,x-1) == 'M' && grid.dig(y+2,x-2) == 'A' && grid.dig(y+3,x-3) == 'S'
+  end
+
+  # check right
+  words += 1 if grid.dig(y,x+1) == 'M' && grid.dig(y,x+2) == 'A' && grid.dig(y,x+3) == 'S'
+
+  # check down
+  words += 1 if grid.dig(y+1,x) == 'M' && grid.dig(y+2,x) == 'A' && grid.dig(y+3,x) == 'S'
+
+  # check down right
+  words += 1 if grid.dig(y+1,x+1) == 'M' && grid.dig(y+2,x+2) == 'A' && grid.dig(y+3,x+3) == 'S'
+
+  words
+end
+
+rows = grid.length
+cols = grid.dig(0).length
+
+word_count = 0
+
+(0...rows).each do |y|
+  (0...cols).each do |x|
+
+    if grid.dig(y,x) == 'X'
+      # Count all the words starting here
+      word_count += count_words_at(grid, x, y)
+    end
+
+  end
+end
+
+puts "Words found: #{word_count}"
