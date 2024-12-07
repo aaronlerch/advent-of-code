@@ -1,0 +1,53 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+rules = {}
+updates = []
+
+input.each do |line|
+  next if line.empty?
+  first,second = line.split "|"
+
+  if second
+    rules[first.to_i] ||= []
+    rules[first.to_i] << second.to_i
+  else
+    updates << first.split(",").map(&:to_i)
+  end
+end
+
+def right_order?(update, rules)
+  update.each_with_index do |page,i|
+    # check prior numbers
+    (0...i).each do |idx|
+      r = rules[update[idx]]
+      # if there's no rule for the page, ignore and keep going
+      next unless r
+      # make sure the prior page rule includes the current page (current must come after prior)
+      return false unless r.include? page
+    end
+
+    # check subsequent numbers against the current page rule
+    r = rules[page]
+    if r
+      (i+1...update.length).each do |idx|
+        # make sure the subsequent page exists in the rule set
+        return false unless r.include?(update[idx])
+      end
+    end
+  end
+
+  true
+end
+
+total = 0
+
+updates.each do |update|
+  if right_order?(update, rules)
+    total += update[update.length / 2]
+  end
+end
+
+puts "Total: #{total}"
