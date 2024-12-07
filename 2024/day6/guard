@@ -8,6 +8,13 @@ module Direction
   RIGHT = '>'
   DOWN = 'v'
   LEFT = '<'
+
+  MAP = {
+    UP => RIGHT,
+    RIGHT => DOWN,
+    DOWN => LEFT,
+    LEFT => UP
+  }
 end
 
 class Guard
@@ -18,7 +25,8 @@ class Guard
     @x = x
     @y = y
     @direction = direction
-    @history = []
+    # Guard's history includes their starting position
+    @history = [[@x,@y]]
   end
 
   def location
@@ -40,29 +48,12 @@ class Guard
 
   # location == [x,y]
   def move_to(location)
-    x, y = location
+    @x, @y = location
     @history << [@x,@y]
-    @x = x
-    @y = y
   end
 
   def turn
-    case @direction
-    when Direction::UP
-      turn(Direction::RIGHT)
-    when Direction::RIGHT
-      turn(Direction::DOWN)
-    when Direction::DOWN
-      turn(Direction::LEFT)
-    when Direction::LEFT
-      turn(Direction::UP)
-    else
-      turn(Direction::UP)
-    end
-  end
-
-  def turn(direction)
-    @direction = direction
+    @direction = Direction::MAP[@direction]
   end
 
   def to_s
@@ -71,19 +62,20 @@ class Guard
 end
 
 class Lab
-  attr_reader :grid, :guard
+  attr_reader :grid, :guard, :height, :width
 
   def initialize(input)
     @grid = []
     input.each { |line| @grid << line.chars }
+
+    @height = @grid.length
+    @width = @grid.first.length
 
     @grid.each_with_index do |row,y|
       next if @guard
       row.each_with_index do |col,x|
         next if @guard
         @guard = Guard.new(x,y,Direction::UP) if col == Direction::UP
-        # now that we have the guard's initial location, reset it to an empty spot (the guard can move through it later)
-        @grid[y][x] = '.'
       end
     end
 
@@ -91,33 +83,50 @@ class Lab
       puts "UNABLE TO INIT GUARD LOCATION"
       exit 1
     end
+
+    # Change the guard's initial position back to a '.' since the guard can pass through it again
+    @grid[@guard.y][@guard.x] = '.'
   end
 
-  # location == [x,y]
-  def at(location)
-    @grid[location[1]][location[0]]
+  def is_off_grid(location)
+    x, y = location
+    return x < 0 || x >= @width || y < 0 || y >= @height
   end
 
   def can_move_to(location)
-    at(location) != '#'
+    x, y = location
+    thing = @grid[y][x]
+    thing != '#'
   end
 
   def move_guard
-    next_loc = @guard.next_location
-    while !can_move_to next_loc
-      @guard.turn
+    next_loc = nil
+
+    loop do
       next_loc = @guard.next_location
+      return false if is_off_grid(next_loc)
+
+      break if can_move_to(next_loc)
+      @guard.turn
     end
 
-    @guard.move_to next_loc
-    puts "Guard is at #{@guard}"
+    unless next_loc
+      puts "UNEXPECTED: UNABLE TO DETERMINE NEXT LOCATION FOR GUARD"
+      exit 1
+    end
+
+    @guard.move_to(next_loc)
+    true
   end
 end
 
 @lab = Lab.new(input)
-@guard = @lab.guard
-puts "Guard is at #{@guard}"
+puts "Lab size: h=#{@lab.height}, w=#{@lab.width}"
 
-@lab.move_guard
+@guard = @lab.guard
+
+loop do
+  break unless @lab.move_guard
+end
 
 puts "Distinct guard positions: #{@guard.history.uniq.length}"
