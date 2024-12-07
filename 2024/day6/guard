@@ -25,10 +25,40 @@ class Guard
     [@x, @y]
   end
 
-  def move_to(x, y)
-    @history << [@x, @y]
+  def next_location
+    case @direction
+    when Direction::UP
+      [@x,@y-1]
+    when Direction::RIGHT
+      [@x+1,@y]
+    when Direction::DOWN
+      [@x,@y+1]
+    when Direction::LEFT
+      [@x-1,@y]
+    end
+  end
+
+  # location == [x,y]
+  def move_to(location)
+    x, y = location
+    @history << [@x,@y]
     @x = x
     @y = y
+  end
+
+  def turn
+    case @direction
+    when Direction::UP
+      turn(Direction::RIGHT)
+    when Direction::RIGHT
+      turn(Direction::DOWN)
+    when Direction::DOWN
+      turn(Direction::LEFT)
+    when Direction::LEFT
+      turn(Direction::UP)
+    else
+      turn(Direction::UP)
+    end
   end
 
   def turn(direction)
@@ -52,6 +82,8 @@ class Lab
       row.each_with_index do |col,x|
         next if @guard
         @guard = Guard.new(x,y,Direction::UP) if col == Direction::UP
+        # now that we have the guard's initial location, reset it to an empty spot (the guard can move through it later)
+        @grid[y][x] = '.'
       end
     end
 
@@ -60,10 +92,32 @@ class Lab
       exit 1
     end
   end
+
+  # location == [x,y]
+  def at(location)
+    @grid[location[1]][location[0]]
+  end
+
+  def can_move_to(location)
+    at(location) != '#'
+  end
+
+  def move_guard
+    next_loc = @guard.next_location
+    while !can_move_to next_loc
+      @guard.turn
+      next_loc = @guard.next_location
+    end
+
+    @guard.move_to next_loc
+    puts "Guard is at #{@guard}"
+  end
 end
 
 @lab = Lab.new(input)
 @guard = @lab.guard
 puts "Guard is at #{@guard}"
 
-puts "Guard positions: #{@guard.history.length}"
+@lab.move_guard
+
+puts "Distinct guard positions: #{@guard.history.uniq.length}"
