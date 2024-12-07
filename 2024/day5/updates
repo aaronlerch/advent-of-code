@@ -3,10 +3,9 @@
 INPUT_FILE = "input.txt"
 input = File.readlines(INPUT_FILE).map(&:chomp)
 
-# key = number that must be before values
-numbers_after = {}
-# key = number that must be after values
-numbers_before = {}
+# key = page
+# values = pages that must be after value
+rules = {}
 updates = []
 
 input.each do |line|
@@ -14,61 +13,34 @@ input.each do |line|
   first,second = line.split "|"
 
   if second
-    a = first.to_i
-    b = second.to_i
-    numbers_after[a] ||= []
-    numbers_after[a] << b
-
-    numbers_before[b] ||= []
-    numbers_before[b] << a
+    page = first.to_i
+    rules[page] ||= []
+    rules[page] << second.to_i
   else
     updates << first.split(",").map(&:to_i)
   end
 end
 
+def fix(update, rules)
+  update.sort_by { |page| -(rules[page] & update).length }
+end
+
 def right_order?(update, rules)
-  update.each_with_index do |page,i|
-    # check prior numbers
-    (0...i).each do |idx|
-      r = rules[update[idx]]
-      # if there's no rule for the page, ignore and keep going
-      next unless r
-      # make sure the prior page rule includes the current page (current must come after prior)
-      return false unless r.include? page
-    end
-
-    # check subsequent numbers against the current page rule
-    r = rules[page]
-    if r
-      (i+1...update.length).each do |idx|
-        # make sure the subsequent page exists in the rule set
-        return false unless r.include?(update[idx])
-      end
-    end
-  end
-
-  true
+  fixed = fix(update, rules)
+  update == fixed
 end
 
-def fix(update, numbers_before)
-  update.sort_by { |page| (numbers_before[page] & update).length }
-end
-
-correct_updates = []
-fixed = []
+total_correct = 0
+total_fixed = 0
 
 updates.each do |update|
-  if right_order?(update, numbers_after)
-    correct_updates << update
+  fixed = fix(update, rules)
+  if (fixed == update)
+    total_correct += update[update.length / 2]
   else
-    fixed << fix(update, numbers_before)
+    total_fixed += fixed[fixed.length / 2]
   end
 end
 
-total = 0
-correct_updates.each { |u| total += u[u.length / 2] }
-puts "Correct updates total: #{total}"
-
-total = 0
-fixed.each { |u| total += u[u.length / 2] }
-puts "Fixed incorrect updates total: #{total}"
+puts "Correct updates total: #{total_correct}"
+puts "Fixed incorrect updates total: #{total_fixed}"
