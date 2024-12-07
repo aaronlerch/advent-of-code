@@ -1,0 +1,69 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+module Direction
+  UP = '^'
+  RIGHT = '>'
+  DOWN = 'v'
+  LEFT = '<'
+end
+
+class Guard
+  attr_accessor :x, :y, :direction
+  attr_reader :history
+
+  def initialize(x, y, direction)
+    @x = x
+    @y = y
+    @direction = direction
+    @history = []
+  end
+
+  def location
+    [@x, @y]
+  end
+
+  def move_to(x, y)
+    @history << [@x, @y]
+    @x = x
+    @y = y
+  end
+
+  def turn(direction)
+    @direction = direction
+  end
+
+  def to_s
+    "[#{@x},#{@y}], #{@direction}"
+  end
+end
+
+class Lab
+  attr_reader :grid, :guard
+
+  def initialize(input)
+    @grid = []
+    input.each { |line| @grid << line.chars }
+
+    @grid.each_with_index do |row,y|
+      next if @guard
+      row.each_with_index do |col,x|
+        next if @guard
+        @guard = Guard.new(x,y,Direction::UP) if col == Direction::UP
+      end
+    end
+
+    unless @guard
+      puts "UNABLE TO INIT GUARD LOCATION"
+      exit 1
+    end
+  end
+end
+
+@lab = Lab.new(input)
+@guard = @lab.guard
+puts "Guard is at #{@guard}"
+
+puts "Guard positions: #{@guard.history.length}"
