@@ -17,6 +17,16 @@ module Direction
   }
 end
 
+class HistoryEntry
+  attr_reader :x, :y, :direction
+
+  def initialize(x, y, direction)
+    @x = x
+    @y = y
+    @direction = direction
+  end
+end
+
 class Guard
   attr_accessor :x, :y, :direction
   attr_reader :history
@@ -26,7 +36,7 @@ class Guard
     @y = y
     @direction = direction
     # Guard's history includes their starting position
-    @history = [[@x,@y]]
+    @history = [HistoryEntry.new(@x, @y, @direction)]
   end
 
   def location
@@ -49,7 +59,7 @@ class Guard
   # location == [x,y]
   def move_to(location)
     @x, @y = location
-    @history << [@x,@y]
+    @history << HistoryEntry.new(@x, @y, @direction)
   end
 
   def turn
@@ -129,4 +139,5 @@ loop do
   break unless @lab.move_guard
 end
 
-puts "Distinct guard positions: #{@guard.history.uniq.length}"
+historical_locations = @guard.history.uniq { |h| [h.x,h.y] }
+puts "Distinct guard positions: #{historical_locations.length}"
