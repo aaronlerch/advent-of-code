@@ -3,7 +3,10 @@
 INPUT_FILE = "input.txt"
 input = File.readlines(INPUT_FILE).map(&:chomp)
 
-rules = {}
+# key = number that must be before values
+numbers_after = {}
+# key = number that must be after values
+numbers_before = {}
 updates = []
 
 input.each do |line|
@@ -11,8 +14,13 @@ input.each do |line|
   first,second = line.split "|"
 
   if second
-    rules[first.to_i] ||= []
-    rules[first.to_i] << second.to_i
+    a = first.to_i
+    b = second.to_i
+    numbers_after[a] ||= []
+    numbers_after[a] << b
+
+    numbers_before[b] ||= []
+    numbers_before[b] << a
   else
     updates << first.split(",").map(&:to_i)
   end
@@ -42,12 +50,25 @@ def right_order?(update, rules)
   true
 end
 
-total = 0
+def fix(update, numbers_before)
+  update.sort_by { |page| (numbers_before[page] & update).length }
+end
+
+correct_updates = []
+fixed = []
 
 updates.each do |update|
-  if right_order?(update, rules)
-    total += update[update.length / 2]
+  if right_order?(update, numbers_after)
+    correct_updates << update
+  else
+    fixed << fix(update, numbers_before)
   end
 end
 
-puts "Total: #{total}"
+total = 0
+correct_updates.each { |u| total += u[u.length / 2] }
+puts "Correct updates total: #{total}"
+
+total = 0
+fixed.each { |u| total += u[u.length / 2] }
+puts "Fixed incorrect updates total: #{total}"
