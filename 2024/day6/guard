@@ -4,39 +4,33 @@ INPUT_FILE = "input.txt"
 input = File.readlines(INPUT_FILE).map(&:chomp)
 
 module Direction
-  UP = '^'
-  RIGHT = '>'
-  DOWN = 'v'
-  LEFT = '<'
+  UP = '^'.freeze
+  RIGHT = '>'.freeze
+  DOWN = 'v'.freeze
+  LEFT = '<'.freeze
 
   MAP = {
     UP => RIGHT,
     RIGHT => DOWN,
     DOWN => LEFT,
     LEFT => UP
-  }
-end
-
-class HistoryEntry
-  attr_reader :x, :y, :direction
-
-  def initialize(x, y, direction)
-    @x = x
-    @y = y
-    @direction = direction
-  end
+  }.freeze
 end
 
 class Guard
+  attr_reader :initial_x, :initial_y, :initial_direction
   attr_accessor :x, :y, :direction
-  attr_reader :history
+  attr_reader :history, :history_tally
 
   def initialize(x, y, direction)
-    @x = x
-    @y = y
-    @direction = direction
+    @initial_x = @x = x
+    @initial_y = @y = y
+    @initial_direction = @direction = direction
     # Guard's history includes their starting position
-    @history = [HistoryEntry.new(@x, @y, @direction)]
+    @history = [[@x, @y, @direction]]
+    @history_tally = {
+      [@x, @y, @direction] => 1
+    }
   end
 
   def location
@@ -59,11 +53,25 @@ class Guard
   # location == [x,y]
   def move_to(location)
     @x, @y = location
-    @history << HistoryEntry.new(@x, @y, @direction)
+    his = [@x, @y, @direction]
+    @history << his
+    @history_tally[his] ||= 0
+    @history_tally[his] += 1
   end
 
   def turn
     @direction = Direction::MAP[@direction]
+  end
+
+  def reset
+    @x = @initial_x
+    @y = @initial_y
+    @direction = @initial_direction
+    # Guard's history includes their starting position
+    @history = [[@x, @y, @direction]]
+    @history_tally = {
+      [@x, @y, @direction] => 1
+    }
   end
 
   def to_s
@@ -96,11 +104,22 @@ class Lab
 
     # Change the guard's initial position back to a '.' since the guard can pass through it again
     @grid[@guard.y][@guard.x] = '.'
+
+    # deep copy
+    # @original_grid = Marshal.load(Marshal.dump(@grid))
+    @added_obstacle_locations = []
+  end
+
+  def add_obstacle(location)
+    @added_obstacle_locations << location
+    x, y = location
+    @grid[y][x] = '#'
   end
 
   def is_off_grid(location)
     x, y = location
-    return x < 0 || x >= @width || y < 0 || y >= @height
+    off_grid = x < 0 || x >= @width || y < 0 || y >= @height
+    return off_grid
   end
 
   def can_move_to(location)
@@ -128,16 +147,82 @@ class Lab
     @guard.move_to(next_loc)
     true
   end
+
+  def detect_loop
+    # Look through the guard's history
+    # we're in a loop if the guard's history has duplicates occuring >= 4 times
+    @guard.history_tally.values.any? { |v| v >= 4 }
+  end
+
+  def reset
+    @added_obstacle_locations.each do |obs_loc|
+      x, y = obs_loc
+      @grid[y][x] = '.'  # put it back!
+    end
+    @added_obstacle_locations = []
+    # @grid = Marshal.load(Marshal.dump(@original_grid))
+    @guard.reset
+  end
 end
 
 @lab = Lab.new(input)
 puts "Lab size: h=#{@lab.height}, w=#{@lab.width}"
 
 @guard = @lab.guard
+# puts "Guard starting position: #{@guard.to_s}"
 
 loop do
-  break unless @lab.move_guard
+  moved = @lab.move_guard
+  break unless moved
 end
 
-historical_locations = @guard.history.uniq { |h| [h.x,h.y] }
+historical_locations = @guard.history.map { |h| [h[0],h[1]] }.uniq
+
+# Part 1
+puts "PART 1"
 puts "Distinct guard positions: #{historical_locations.length}"
+
+# Part 2
+puts "PART 2"
+# remove the guard's starting location from the historical locations for this test
+historical_locations.delete [@guard.initial_x, @guard.initial_y]
+
+loop_count = 0
+
+# Place an obstacle at every position the guard walks, and see if it puts the guard into a loop
+historical_locations.each do |loc|
+
+  print '.'
+  $stdout.flush
+
+  r = Ractor.new @lab, loc do |lab, loc|
+    loop_detected = false
+
+    lab.reset
+    lab.add_obstacle loc
+
+    loop do
+      moved = lab.move_guard
+      if !moved
+        break
+      end
+
+      looped = lab.detect_loop
+      if looped
+        loop_detected = true
+        #loop_count += 1
+        break
+      end
+    end
+
+    loop_detected
+  end
+
+  looped = r.take
+  loop_count += 1 if looped
+
+end
+
+puts ""
+
+puts "Loops caused: #{loop_count}"
