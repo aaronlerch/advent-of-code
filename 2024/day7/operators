@@ -1,0 +1,42 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+OPERATORS = {
+    plus: -> (a,b) { a + b },
+    mult: -> (a,b) { a * b }
+}
+
+valid_values = []
+
+input.each do |line|
+    # 408407: 40 770 70 8 1
+    first, second = line.split(':')
+    test_value = first.to_i
+    nums = second.split(' ').map(&:to_i)
+
+    valid = false
+
+    # Algorithm
+    # Test all repeated permutations of OPERATORS for nums.length - 1
+    operator_perms = OPERATORS.values.repeated_permutation(nums.length - 1).to_a
+
+    operator_perms.each do |ops|
+        result = nums[0]
+        nums.each_with_index do |num,idx|
+            next if idx == 0 # skip the first one
+            result = ops[idx-1].call(result, num)
+        end
+        if result == test_value
+            valid = true
+            break
+        end
+    end
+
+    if valid
+        valid_values << test_value
+    end
+end
+
+puts "Total of valid test values: #{valid_values.sum}"
