@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+require 'parallel'
+
 INPUT_FILE = "input.txt"
 input = File.readlines(INPUT_FILE).map(&:chomp)
 
@@ -190,24 +192,20 @@ historical_locations.delete [@guard.initial_x, @guard.initial_y]
 loop_count = 0
 
 # Place an obstacle at every position the guard walks, and see if it puts the guard into a loop
-historical_locations.each do |loc|
+Parallel.each(historical_locations, progress: "Testing Locations", in_processes: 5, finish: -> (item, i, result) { loop_count += result }) do |loc|
 
-  print '.'
-  $stdout.flush
-
-  r = Ractor.new @lab, loc do |lab, loc|
     loop_detected = false
 
-    lab.reset
-    lab.add_obstacle loc
+    @lab.reset
+    @lab.add_obstacle loc
 
     loop do
-      moved = lab.move_guard
+      moved = @lab.move_guard
       if !moved
         break
       end
 
-      looped = lab.detect_loop
+      looped = @lab.detect_loop
       if looped
         loop_detected = true
         #loop_count += 1
@@ -215,13 +213,11 @@ historical_locations.each do |loc|
       end
     end
 
-    loop_detected
-  end
-
-  looped = r.take
-  loop_count += 1 if looped
-
+    loop_detected ? 1 : 0
+    #loop_count += 1 if looped
 end
+
+Process.waitall
 
 puts ""
 
