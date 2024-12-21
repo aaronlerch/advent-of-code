@@ -3,25 +3,22 @@
 INPUT_FILE = "input.txt"
 input = File.readlines(INPUT_FILE).map(&:chomp)
 
-OPERATORS = {
+OPERATORS_PART_ONE = {
     plus: -> (a,b) { a + b },
     mult: -> (a,b) { a * b }
 }
 
-valid_values = []
+OPERATORS_PART_TWO = {
+    plus: -> (a,b) { a + b },
+    mult: -> (a,b) { a * b },
+    concat: -> (a,b) { (a.to_s + b.to_s).to_i }
+}
 
-input.each do |line|
-    # 408407: 40 770 70 8 1
-    first, second = line.split(':')
-    test_value = first.to_i
-    nums = second.split(' ').map(&:to_i)
+part_one_valid_values = []
+part_two_valid_values = []
 
+def is_test_value_correct(nums, test_value, operator_perms)
     valid = false
-
-    # Algorithm
-    # Test all repeated permutations of OPERATORS for nums.length - 1
-    operator_perms = OPERATORS.values.repeated_permutation(nums.length - 1).to_a
-
     operator_perms.each do |ops|
         result = nums[0]
         nums.each_with_index do |num,idx|
@@ -34,9 +31,32 @@ input.each do |line|
         end
     end
 
-    if valid
-        valid_values << test_value
+    valid
+end
+
+input.each do |line|
+    # example:  "408407: 40 770 70 8 1"
+    first, second = line.split(':')
+    test_value = first.to_i
+    nums = second.split(' ').map(&:to_i)
+    
+    # Find the results from part one
+    operator_perms = OPERATORS_PART_ONE.values.repeated_permutation(nums.length - 1).to_a
+    valid = is_test_value_correct(nums, test_value, operator_perms)
+
+    part_one_valid_values << test_value if valid
+
+    unless valid
+        # Find the results from part two
+        operator_perms = OPERATORS_PART_TWO.values.repeated_permutation(nums.length - 1).to_a
+        valid = is_test_value_correct(nums, test_value, operator_perms)
+        part_two_valid_values << test_value if valid
     end
 end
 
-puts "Total of valid test values: #{valid_values.sum}"
+part_one_result = part_one_valid_values.sum
+part_two_result = part_two_valid_values.sum
+
+puts "PART ONE Total of valid test values: #{part_one_result}"
+puts "PART TWO Total of valid test values: #{part_two_result}"
+puts "PART ONE plus PART TWO: #{part_one_result + part_two_result}"
