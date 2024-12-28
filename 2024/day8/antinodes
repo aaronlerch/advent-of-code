@@ -1,0 +1,68 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+frequencies = {} # frequency => locations
+locations = {} # coord => frequencies
+antinode_freqs = {} # freq => coords
+antinode_coords = {} # coord => freqs
+
+height = input.length
+width = input.first.length
+
+input.each_with_index do |line,y|
+  line.chars.each_with_index do |pos,x|
+    next if pos == '.'
+    coords = [x,y]
+
+    frequencies[pos] ||= []
+    frequencies[pos] << coords
+
+    locations[coords] ||= []
+    locations[coords] << pos
+  end
+end
+
+puts "Found #{frequencies.length} unique frequencies across #{locations.length} positions"
+
+# Calculate all antinode locations
+# 1. for each antenna and frequency
+# 2. look at all other antennas with the same frequency
+# 3. compute and capture the antinodes
+
+frequencies.each do |freq, coords|
+  coords.each do |coord|
+    x1, y1 = coord
+    coords.each do |other_coord|
+      next if coord == other_coord
+      x2, y2 = other_coord
+      delta_x = x1 - x2
+      delta_y = y1 - y2
+      antinode = [x1 + delta_x, y1 + delta_y]
+
+      antinode_freqs[freq] ||= []
+      antinode_freqs[freq] << antinode
+
+      antinode_coords[antinode] ||= []
+      antinode_coords[antinode] << freq
+    end
+  end
+end
+
+# Remove any antionodes that are off the map
+antinode_freqs.each do |freq, coord_list|
+  coord_list.select! { |antinode| antinode[0] >= 0 && antinode[0] < width && antinode[1] >= 0 && antinode[1] < height }
+end
+
+antinode_coords.select! { |coord, freq_list| coord[0] >= 0 && coord[0] < width && coord[1] >= 0 && coord[1] < height }
+
+puts "----- BY FREQUENCY -----"
+antinode_freqs.each { |key,value| puts "#{key}: #{value.to_s}" }
+puts "------------------------"
+
+puts "------- BY COORD -------"
+antinode_coords.each { |key,value| puts "#{key}: #{value.to_s}" }
+puts "------------------------"
+
+puts "Found #{antinode_coords.keys.length} unique antinodes"
