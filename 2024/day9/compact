@@ -4,13 +4,54 @@ INPUT_FILE = "input.txt"
 input = File.readlines(INPUT_FILE).map(&:chomp)
 
 layout = input.first.chars.map(&:to_i)
+disk = []
 
 puts "#{layout.length} blocks"
 
-block_count = layout.sum
-disk = []
+# Part 2 - compact the disk by moving an entire file to the foremost free space that fits the full file size
+# In this case it's more advantageous to use the raw file and free space size numbers than to expand them fully into blocks
 
-puts "Total block count: #{block_count}"
+# Iterate backwards through the layout. For each file (even indexes) find the first free space (odd indexes) that fits the file size
+# Move the file to the free space and set the original file location to 0 (indicating a nonexistent file block)
+
+# TODO: This is naive and needs to be fixed
+# if we have free space of size 8, and 2 files of size 4, we should be able to move both into the same free space
+# but this algorithm would only move the first file and then continue on and put the next size 4 file in the next open spot,
+# which would be wrong.
+
+# TODO: also this approach would LOSE the ID of the file because it depends on the original block location and
+# it currently only tries to handle file and free space sizes without handling IDs
+
+# TODO: SO IT'S ALL WRONG AND NEEDS TO BE DONE DIFFERENTLY
+
+pointer = layout.length - 1
+while pointer >= 0
+    is_file = pointer % 2 == 0
+    if is_file
+        file_size = layout[pointer]
+
+        finder = 0
+        while finder < pointer
+            # find the first free space that fits the file size
+            if layout[finder] >= file_size
+                layout[finder] = 0
+                layout[finder + 1] = file_size
+                break
+            end
+        end
+        free_space = pointer - 1
+        while free_space >= 0 && layout[free_space] < file_size
+            free_space -= 2
+        end
+
+        if free_space >= 0
+            layout[free_space] = 0
+            layout[free_space + 1] = file_size
+        end
+    end
+
+    pointer -= 2 # skip the open block
+end
 
 id = 0
 is_file = true
