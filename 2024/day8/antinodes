@@ -5,7 +5,6 @@ input = File.readlines(INPUT_FILE).map(&:chomp)
 
 frequencies = {} # frequency => locations
 locations = {} # coord => frequencies
-antinode_freqs = {} # freq => coords
 antinode_coords = {} # coord => freqs
 
 height = input.length
@@ -19,47 +18,58 @@ input.each_with_index do |line,y|
     frequencies[pos] ||= []
     frequencies[pos] << coords
 
-    locations[coords] ||= []
-    locations[coords] << pos
+    # locations[coords] ||= []
+    # locations[coords] << pos
   end
 end
 
-puts "Found #{frequencies.length} unique frequencies across #{locations.length} positions"
+#puts "Found #{frequencies.length} unique frequencies across #{locations.length} positions"
+puts "Found #{frequencies.length} unique frequencies"
+
+def on_map(coord, width, height)
+  x, y = coord
+  x >= 0 && x < width && y >= 0 && y < height
+end
+
+def record_antinode(antinodes, coord, freq)
+  antinodes[coord] ||= []
+  antinodes[coord] << freq
+  antinodes[coord].uniq! # only record the frequency once at this location
+end
 
 # Calculate all antinode locations
 # 1. for each antenna and frequency
 # 2. look at all other antennas with the same frequency
-# 3. compute and capture the antinodes
+# 3. compute and capture the antinodes repeating until the edges of the map
+# 4. include the locations of the 2 antennas being evaluated
 
 frequencies.each do |freq, coords|
   coords.each do |coord|
     x1, y1 = coord
     coords.each do |other_coord|
       next if coord == other_coord
+
+      # we have at least 2 antennas with the same frequency, capture the original and this one as antinodes
+      record_antinode(antinode_coords, coord, freq)
+      record_antinode(antinode_coords, other_coord, freq)
+
+      # calculate the antinode and repeat until off the map
+
       x2, y2 = other_coord
       delta_x = x1 - x2
       delta_y = y1 - y2
       antinode = [x1 + delta_x, y1 + delta_y]
 
-      antinode_freqs[freq] ||= []
-      antinode_freqs[freq] << antinode
-
-      antinode_coords[antinode] ||= []
-      antinode_coords[antinode] << freq
+      while on_map(antinode, width, height)
+        record_antinode(antinode_coords, antinode, freq)
+        antinode = [antinode[0] + delta_x, antinode[1] + delta_y]
+      end
     end
   end
 end
 
-# Remove any antionodes that are off the map
-antinode_freqs.each do |freq, coord_list|
-  coord_list.select! { |antinode| antinode[0] >= 0 && antinode[0] < width && antinode[1] >= 0 && antinode[1] < height }
-end
-
-antinode_coords.select! { |coord, freq_list| coord[0] >= 0 && coord[0] < width && coord[1] >= 0 && coord[1] < height }
-
-puts "----- BY FREQUENCY -----"
-antinode_freqs.each { |key,value| puts "#{key}: #{value.to_s}" }
-puts "------------------------"
+# this is a moot point now
+# antinode_coords.select! { |coord, freq_list| coord[0] >= 0 && coord[0] < width && coord[1] >= 0 && coord[1] < height }
 
 puts "------- BY COORD -------"
 antinode_coords.each { |key,value| puts "#{key}: #{value.to_s}" }
