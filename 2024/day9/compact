@@ -1,0 +1,54 @@
+#!/usr/bin/env ruby
+
+INPUT_FILE = "input.txt"
+input = File.readlines(INPUT_FILE).map(&:chomp)
+
+layout = input.first.chars.map(&:to_i)
+
+puts "#{layout.length} blocks"
+
+block_count = layout.sum
+disk = []
+
+puts "Total block count: #{block_count}"
+
+id = 0
+is_file = true
+
+# brute force this thing by fully expanding all specified fils and free spaces into blocks
+layout.each_with_index do |block_size, idx|
+    is_file = idx % 2 == 0 # even index is file, odd is free space
+    disk += Array.new(block_size, is_file ? id : nil)
+    id += 1 if is_file
+end
+
+# Compact the disk by iterating until a front pointer reaches a back pointer.
+# Each iteration, move the back pointer to the next non-nil value and move the front pointer to the next nil value.
+# When the back pointer points to a non-nil value and the front pointer points to nil, move the back pointer value
+# to the front pointer location and set the back pointer value to nil
+
+front = 0
+back = disk.length - 1
+
+while front < back
+    while disk[front] && front < disk.length - 1
+        front += 1
+    end
+
+    while !disk[back] && back > 0
+        back -= 1
+    end
+
+    if front < back
+        disk[front] = disk[back]
+        disk[back] = nil
+    end
+end
+
+checksum = 0
+disk.each_with_index do |block, idx|
+    next unless block
+    checksum += idx * block
+end
+
+puts "Checksum: #{checksum}"
