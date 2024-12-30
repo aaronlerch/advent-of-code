@@ -3,55 +3,16 @@
 INPUT_FILE = "input.txt"
 input = File.readlines(INPUT_FILE).map(&:chomp)
 
+DEBUG = 0
+NORMAL = 1
+NONE = 3
+
+LOG_LEVEL = NONE # NORMAL # DEBUG
+
 layout = input.first.chars.map(&:to_i)
 disk = []
 
 puts "#{layout.length} blocks"
-
-# Part 2 - compact the disk by moving an entire file to the foremost free space that fits the full file size
-# In this case it's more advantageous to use the raw file and free space size numbers than to expand them fully into blocks
-
-# Iterate backwards through the layout. For each file (even indexes) find the first free space (odd indexes) that fits the file size
-# Move the file to the free space and set the original file location to 0 (indicating a nonexistent file block)
-
-# TODO: This is naive and needs to be fixed
-# if we have free space of size 8, and 2 files of size 4, we should be able to move both into the same free space
-# but this algorithm would only move the first file and then continue on and put the next size 4 file in the next open spot,
-# which would be wrong.
-
-# TODO: also this approach would LOSE the ID of the file because it depends on the original block location and
-# it currently only tries to handle file and free space sizes without handling IDs
-
-# TODO: SO IT'S ALL WRONG AND NEEDS TO BE DONE DIFFERENTLY
-
-pointer = layout.length - 1
-while pointer >= 0
-    is_file = pointer % 2 == 0
-    if is_file
-        file_size = layout[pointer]
-
-        finder = 0
-        while finder < pointer
-            # find the first free space that fits the file size
-            if layout[finder] >= file_size
-                layout[finder] = 0
-                layout[finder + 1] = file_size
-                break
-            end
-        end
-        free_space = pointer - 1
-        while free_space >= 0 && layout[free_space] < file_size
-            free_space -= 2
-        end
-
-        if free_space >= 0
-            layout[free_space] = 0
-            layout[free_space + 1] = file_size
-        end
-    end
-
-    pointer -= 2 # skip the open block
-end
 
 id = 0
 is_file = true
@@ -63,28 +24,100 @@ layout.each_with_index do |block_size, idx|
     id += 1 if is_file
 end
 
-# Compact the disk by iterating until a front pointer reaches a back pointer.
-# Each iteration, move the back pointer to the next non-nil value and move the front pointer to the next nil value.
-# When the back pointer points to a non-nil value and the front pointer points to nil, move the back pointer value
-# to the front pointer location and set the back pointer value to nil
+# Compact the disk by moving each file to the left-most location that will fit it.
+# Each iteration,
+# move the back pointer to the start of the next file block, and count how big the file is
+# iterate the front pointer until it reaches a nil value with enough contiguous nil values to fit the file block size
+#   if a spot is found, move the file to the front pointer location
+#   if a spot isn't found before reaching the back pointer location, the file doesn't move, skip it
 
-front = 0
+def log(prefix, message, level=NORMAL)
+    return unless LOG_LEVEL <= level
+    prefix = prefix.to_s
+    prefix = "#{prefix}: " unless prefix.empty?
+    puts "#{prefix}#{message}"
+end
+
+def log_disk(disk, level=NORMAL)
+    disk_msg = disk.map {|d| d ? d : '.' }.join('')
+    log("", disk_msg, level)
+end
+
+log_disk(disk)
+
+last_file_id = nil
+current_file_id = nil
 back = disk.length - 1
 
-while front < back
-    while disk[front] && front < disk.length - 1
-        front += 1
-    end
+while (!last_file_id || last_file_id > 1) && back > 0
+    log_prefix = 0
+
+    # find the end of the next file block to process
+    log(log_prefix+=1, "Looking for the next file block to process (back=#{back})", DEBUG)
 
     while !disk[back] && back > 0
         back -= 1
     end
 
-    if front < back
-        disk[front] = disk[back]
-        disk[back] = nil
+    # we are processing a file, find the start of it
+    current_file_id = disk[back]
+    
+    log(log_prefix+=1, "Found file block #{current_file_id} at #{back}", DEBUG)
+    start = back
+    while start-1 > 0 && disk[start-1] == current_file_id
+        start -= 1
     end
+
+    
+    log(log_prefix+=1, "Found start of file block #{current_file_id} at #{start}", DEBUG)
+
+    # the file goes from start to back
+    file_size = back - start + 1 # inclusive range
+
+    log(log_prefix+=1, "File size of file block #{current_file_id}: #{file_size}", DEBUG)
+
+    log(log_prefix+=1, "Looking for free space starting at the front", DEBUG)
+
+    # now starting at the beginning, find the first block of free space of size >= file_size
+    front = free_start = 0
+    found_space = false
+    while !found_space && front < start
+        while disk[front] && front < disk.length - 1
+            front += 1
+        end
+
+        log(log_prefix+=1, "Found free space block at #{front}", DEBUG)
+
+        # we are at a free space block, check if it's big enough
+        free_start = front
+        space_size = 0
+        while !disk[front] && front < start
+            space_size += 1
+            front += 1
+        end
+
+        log(log_prefix+=1, "Found free space block of size #{space_size} at #{free_start}", DEBUG)
+
+        if space_size >= file_size
+            found_space = true
+            log(log_prefix+=1, "Found space (size=#{space_size}) for file block #{current_file_id} (size=#{file_size}) at #{free_start}", DEBUG)
+            break
+        end
+    end
+
+    if found_space
+        # move the file to the free space
+        log(log_prefix+=1, "Moving file block #{current_file_id} to free space at #{free_start} (start=#{start})", DEBUG)
+        disk[free_start...(free_start+file_size)] = Array.new(file_size, current_file_id)
+        disk[start...(start+file_size)] = Array.new(file_size, nil)
+        log_disk(disk)
+    end
+
+    last_file_id = current_file_id
+    back = start - 1 # continue at one spot earlier than the start of our last known file block
 end
+
+log_disk(disk)
 
 checksum = 0
 disk.each_with_index do |block, idx|
